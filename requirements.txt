@@ -1,0 +1,4 @@
+click==7.1.2
+click-didyoumean==0.3.1
+p==1.4.0
+pygame==2.6.0
