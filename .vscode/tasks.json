@@ -1,0 +1,34 @@
+{
+    // Para executar diretamente, utilize o atalho Ctrl+Shift+B
+    // Para mais informações, acesse: https://go.microsoft.com/fwlink/?LinkId=733558
+    "version": "2.0.0",
+    "tasks": [
+      {
+        "label": "Servidor",
+        "type": "shell",
+        "command": "python",
+        "args": [
+          "${workspaceFolder}/kttne/server.py"
+        ],
+        "problemMatcher": [],
+        "group": {
+          "kind": "build",
+        }
+      },
+      {
+        "label": "Cliente",
+        "type": "shell",
+        "command": "python",
+        "args": [
+          "${workspaceFolder}/kttne/client.py"
+        ],
+        "problemMatcher": [],
+        "group": {
+          "kind": "build",
+        },
+        "runOptions": {
+          "instanceLimit": 2
+        }
+      }
+    ]
+  }

@@ -9,22 +9,24 @@ server = settings.ip_address
 port = 5555
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-# AF_INET is the address family for IPv4
-# SOCK_STREAM is the socket type for TCP
+# AF_INET é a família de endereços para IPv4
+# SOCK_STREAM é o tipo de socket para TCP
 
 try:
     s.bind((server, port))
 except socket.error as e:
     str(e)
 
-# s.listen(2) means that the server can only accept 2 connections
-s.listen(2)
+s.listen(2)  # Número máximo de conexões que o servidor pode aceitar
 print("Servidor iniciado. Aguardando conexão...")
 
 
 def threaded_client(conn):
-    conn.send(str.encode("Conectado"))
+    conn.send(str.encode("Conectado"))  # Envia uma mensagem de confirmação ao cliente
+
+    # Inicializa a variável de resposta
     reply = ""
+
     while True:
         try:
             data = conn.recv(2048)  # 2048 é o tamanho do buffer (em bytes)
@@ -48,7 +50,7 @@ def threaded_client(conn):
 
 
 while True:
-    conn, addr = s.accept()
+    conn, addr = s.accept()  # Aceita a conexão do cliente
     print("Conectado à: ", addr)
 
     # Criamos uma nova thread para cada cliente, para que possamos

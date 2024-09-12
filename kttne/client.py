@@ -1,4 +1,5 @@
 import pygame
+from network import Network
 
 width = 500
 height = 500
@@ -6,35 +7,56 @@ height = 500
 win = pygame.display.set_mode((width, height))
 pygame.display.set_caption("Client")
 
-class Player():
+
+class Player:
     def __init__(self, x, y, width, height, color):
         self.x = x
         self.y = y
         self.width = width
         self.height = height
         self.color = color
+        self.velocity = 5
         self.rect = (x, y, width, height)
 
     def draw(self, win):
         pygame.draw.rect(win, self.color, self.rect)
 
+    def isOutOfBoundsX(self, pos):
+        return pos < 0 or pos > width - self.width
+
+    def isOutOfBoundsY(self, pos):
+        return pos < 0 or pos > height - self.height
+
     def move(self):
         keys = pygame.key.get_pressed()
+
+        delta = list(0 for _ in range(2))
+
         if keys[pygame.K_LEFT]:
-            self.x -= 5
+            delta[0] = -self.velocity
         if keys[pygame.K_RIGHT]:
-            self.x += 5
+            delta[0] = self.velocity
         if keys[pygame.K_UP]:
-            self.y -= 5
+            delta[1] = -self.velocity
         if keys[pygame.K_DOWN]:
-            self.y += 5
+            delta[1] = self.velocity
+
+        if self.isOutOfBoundsX(self.x + delta[0]):
+            delta[0] = 0
+        if self.isOutOfBoundsY(self.y + delta[1]):
+            delta[1] = 0
+
+        self.x += delta[0]
+        self.y += delta[1]
 
         self.rect = (self.x, self.y, self.width, self.height)
+
 
 def redrawWindow(win, player):
     win.fill((255, 255, 255))
     player.draw(win)
     pygame.display.update()
+
 
 def main():
     run = True
@@ -51,5 +73,6 @@ def main():
         p.move()
 
         redrawWindow(win, p)
+
 
 main()
