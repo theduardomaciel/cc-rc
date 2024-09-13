@@ -7,10 +7,13 @@ settings = Settings()
 class Network:
     def __init__(self):
         self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.server = Settings.ip_address
-        self.address = (self.server, settings.port)
-        self.id = self.connect()
-        print(self.id)
+        self.server = settings.ip_address
+        self.port = settings.port
+        self.address = (self.server, self.port)
+        self.pos = self.connect()
+
+    def getPos(self):
+        return self.pos
 
     def connect(self):
         try:

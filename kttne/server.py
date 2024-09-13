@@ -6,7 +6,7 @@ from utils.settings import Settings
 settings = Settings()
 
 server = settings.ip_address
-port = 5555
+port = settings.port
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 # AF_INET é a família de endereços para IPv4
