@@ -1,4 +1,5 @@
 import pygame
+
 from utils.settings import Settings
 
 settings = Settings()
@@ -21,7 +22,7 @@ class Player:
         self.velocity_y = 0
         self.max_velocity = 5
         self.acceleration = 0.5  # Aceleração reduzida para movimento mais gradual
-        self.friction = 0.35  # Fricção menor para deslizar mais
+        self.friction = 0.02  # Fricção menor para deslizar mais
         self.bounce_factor = 0.5  # Fator de rebote (suavidade)
 
     def draw(self, win):

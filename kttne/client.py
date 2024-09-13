@@ -3,16 +3,17 @@ from network import Network
 from classes.player import Player
 
 from utils.settings import Settings
+
 settings = Settings()
 
-width = settings.width
-height = settings.height
+width = 600
+height = 600
 
 window = pygame.display.set_mode((width, height))
 pygame.display.set_caption("Client")
 
 
-def redraw_window(window, player):
+def redraw_window(window, player: Player):
     window.fill((255, 255, 255))
 
     player.draw(window)
@@ -21,7 +22,7 @@ def redraw_window(window, player):
 
 def main():
     run = True
-    n = Network()
+    # n = Network()
     clock = pygame.time.Clock()
 
     player = Player(100, 50, 100, 100, (255, 0, 0))
@@ -37,5 +38,6 @@ def main():
         player.move()
 
         redraw_window(window, player)
+
 
 main()

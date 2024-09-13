@@ -3,9 +3,9 @@ import _thread
 import pickle
 
 from utils.settings import Settings
+
 settings = Settings()
 
-print(settings.width)
 server = settings.ip_address
 port = settings.port
 
