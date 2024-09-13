@@ -1,10 +1,11 @@
 import socket
 import _thread
-import sys
-from utils.settings import Settings
+import pickle
 
+from utils.settings import Settings
 settings = Settings()
 
+print(settings.width)
 server = settings.ip_address
 port = settings.port
 
@@ -41,8 +42,9 @@ def threaded_client(conn):
                 print("Enviando: ", reply)
 
             # Enviando a resposta de volta ao cliente (codificada em um objeto de bytes)
-            conn.sendall(str.encode(reply))
+            conn.sendall(pickle.dumps(reply))
         except:
+            print("Erro")
             break
 
     print("Conexão perdida")
@@ -53,6 +55,6 @@ while True:
     conn, addr = s.accept()  # Aceita a conexão do cliente
     print("Conectado à: ", addr)
 
-    # Criamos uma nova thread para cada cliente, para que possamos
+    # Criamos uma nova thread para cada cliente para podermos
     # aceitar múltiplos clientes ao mesmo tempo (multithreading - paralelismo)
     _thread.start_new_thread(threaded_client, (conn,))

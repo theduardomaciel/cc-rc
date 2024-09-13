@@ -6,6 +6,9 @@ migrations/
 media/
 settings.py
 
+# IDE
+.idea/
+
 # Distribution / packaging
 .Python
 env/

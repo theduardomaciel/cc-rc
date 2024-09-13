@@ -3,8 +3,8 @@ from utils.settings import Settings
 
 settings = Settings()
 
-width = settings.width
-height = settings.height
+window_width = settings.width
+window_height = settings.height
 
 
 class Player:
@@ -24,21 +24,14 @@ class Player:
         self.friction = 0.35  # Fricção menor para deslizar mais
         self.bounce_factor = 0.5  # Fator de rebote (suavidade)
 
-    def read_pos(str):
-        str = str.split(",")
-        return int(str[0]), int(str[1])
-
-    def make_pos(tup):
-        return str(tup[0]) + "," + str(tup[1])
-
     def draw(self, win):
         pygame.draw.rect(win, self.color, self.rect)
 
-    def isOutOfBoundsX(self, pos):
-        return pos < 0 or pos > width - self.width
+    def is_out_of_bounds_x(self, pos):
+        return pos < 0 or pos > window_width - self.width
 
-    def isOutOfBoundsY(self, pos):
-        return pos < 0 or pos > height - self.height
+    def is_out_of_bounds_y(self, pos):
+        return pos < 0 or pos > window_height - self.height
 
     def move(self):
         keys = pygame.key.get_pressed()
@@ -90,10 +83,10 @@ class Player:
             self.velocity_y = 0
 
         # Checar e aplicar o rebote nas bordas
-        if self.isOutOfBoundsX(self.x + self.velocity_x):
+        if self.is_out_of_bounds_x(self.x + self.velocity_x):
             self.velocity_x = -self.velocity_x * self.bounce_factor  # Rebote horizontal
 
-        if self.isOutOfBoundsY(self.y + self.velocity_y):
+        if self.is_out_of_bounds_y(self.y + self.velocity_y):
             self.velocity_y = -self.velocity_y * self.bounce_factor  # Rebote vertical
 
         # Atualizar posição
@@ -102,8 +95,8 @@ class Player:
 
         self.update()
 
-        print("Velocidade X: ", self.velocity_x)
-        print("Velocidade Y: ", self.velocity_y)
+        # print("Velocidade X: ", self.velocity_x)
+        # print("Velocidade Y: ", self.velocity_y)
 
     def update(self):
         self.rect = (self.x, self.y, self.width, self.height)
