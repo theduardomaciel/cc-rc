@@ -2,7 +2,9 @@ import socket
 import pickle
 
 from utils.settings import Settings
+
 settings = Settings()
+
 
 class Network:
     def __init__(self):
@@ -21,16 +23,16 @@ class Network:
             self.client.connect(self.address)
 
             # Recebe a resposta do servidor
-            return self.client.recv(2048).decode()
+            return pickle.loads(self.client.recv(2048 * 2))
         except socket.error as e:
             print(e)
 
     def send(self, data):
         try:
             # Envia dados ao servidor
-            self.client.send(str.encode(data))
+            self.client.send(pickle.dumps(data))
 
             # Recebe a resposta do servidor
-            return pickle.loads(self.client.recv(2048 * 2))
+            return pickle.loads(self.client.recv(2048))
         except socket.error as e:
             print(e)
