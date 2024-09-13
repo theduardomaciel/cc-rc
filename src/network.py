@@ -1,6 +1,7 @@
 import socket
 import pickle
 
+from classes.player import Player
 from utils.settings import Settings
 
 settings = Settings()
@@ -14,7 +15,7 @@ class Network:
         self.address = (self.server, self.port)
         self.player = self.connect()
 
-    def get_player(self):
+    def get_player(self) -> Player:
         return self.player
 
     def connect(self):

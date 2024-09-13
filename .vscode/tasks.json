@@ -8,7 +8,7 @@
         "type": "shell",
         "command": "python",
         "args": [
-          "${workspaceFolder}/kttne/server.py"
+          "${workspaceFolder}/src/server.py"
         ],
         "problemMatcher": [],
         "group": {
@@ -20,7 +20,7 @@
         "type": "shell",
         "command": "python",
         "args": [
-          "${workspaceFolder}/kttne/client.py"
+          "${workspaceFolder}/src/client.py"
         ],
         "problemMatcher": [],
         "group": {

@@ -6,8 +6,8 @@ from utils.settings import Settings
 
 settings = Settings()
 
-width = 500
-height = 500
+width = settings.width
+height = settings.height
 
 window = pygame.display.set_mode((width, height))
 pygame.display.set_caption("Client")
@@ -16,8 +16,11 @@ pygame.display.set_caption("Client")
 def redraw_window(window, player: Player, player2: Player):
     window.fill((255, 255, 255))
 
-    player.draw(window)
-    player2.draw(window)
+    if player is not None:
+        player.draw(window)
+
+    if player2 is not None:
+        player2.draw(window)
 
     pygame.display.update()
 
