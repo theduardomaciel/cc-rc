@@ -16,7 +16,9 @@ pygame.display.set_caption("Client")
 pygame.font.init()
 
 
-def redraw_window(window, font, local_player: Player, players: list[Player]):
+def redraw_window(
+    window: pygame.Surface, font, local_player: Player, players: list[Player]
+):
     window.fill((255, 255, 255))
 
     local_player.draw(window, font)
@@ -24,6 +26,11 @@ def redraw_window(window, font, local_player: Player, players: list[Player]):
     if players is not None:
         for player in players:
             player.draw(window)
+
+    window.blit(
+        font.render("Jogadores conectados: " + str(len(players) + 1), True, (0, 0, 0)),
+        (10, 10),
+    )
 
     pygame.display.update()
 

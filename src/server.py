@@ -1,7 +1,7 @@
 import socket
 import _thread
 import pickle
-import random
+from random import randrange, randint
 from threading import Lock
 
 
@@ -43,18 +43,13 @@ def threaded_client(conn, player):
         connected_players += 1
     print(f"Jogador {player} conectado. Jogadores conectados: {connected_players}")
 
-    random_position = random.choice(
-        [
-            (0, 0),
-            (settings.width - 50, 0),
-            (0, settings.height - 50),
-            (settings.width - 50, settings.height - 50),
-        ]
+    random_position = randrange(0, settings.width - 50), randrange(
+        0, settings.height - 50
     )
     random_color = (
-        random.randint(0, 255),
-        random.randint(0, 255),
-        random.randint(0, 255),
+        randint(0, 255),
+        randint(0, 255),
+        randint(0, 255),
     )
 
     with lock:
