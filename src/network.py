@@ -30,7 +30,7 @@ class Network:
 
     def send(self, data):
         try:
-            print("Dados enviados:", data)
+            # print("Dados enviados:", data)
 
             # Envia dados ao servidor (jogador local)
             self.client.send(pickle.dumps(data))
