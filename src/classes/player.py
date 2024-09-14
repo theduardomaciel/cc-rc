@@ -19,6 +19,9 @@ class Player:
         self.color = color
         self.rect = (x, y, width, height)
 
+        # Lives
+        self.lives = 3
+
         # Physics
         self.velocity_x = 0
         self.velocity_y = 0
@@ -29,20 +32,20 @@ class Player:
 
         # Dash
         self.is_dashing = False
-        self.dash_speed = 15  # Velocidade durante o dash
+        self.dash_speed = 8.5  # Velocidade durante o dash
         self.dash_cooldown = 500  # Duração do dash em milissegundos
         self.last_dash_time = 0  # Tempo do último dash
 
         # Direction
         self.last_direction = [0, 0]
 
-    # Inicializar a fonte para exibir o cooldown
-    pygame.font.init()
-
     def draw(self, win, font: pygame.font.Font = None):
         pygame.draw.rect(win, self.color, self.rect)
 
         if font is not None:
+            lives_text = font.render(f"{self.lives} vida{self.lives != 1 and "s" or ""}", True, (0, 0, 0))
+            win.blit(lives_text, (self.x + self.width/2 - lives_text.get_width()/2, self.y - 30))
+
             # Exibir o cooldown acima do jogador
             current_time = pygame.time.get_ticks()
             time_since_dash = current_time - self.last_dash_time
@@ -52,7 +55,7 @@ class Player:
 
                 # Desenhar texto acima do jogador
                 cooldown_text = font.render(f"{remaining_time:.1f}s", True, (0, 0, 0))
-                win.blit(cooldown_text, (self.x, self.y - 30))
+                win.blit(cooldown_text, (self.x + self.width/2 - cooldown_text.get_width()/2, self.y + 40))
 
     def is_out_of_bounds_x(self, pos):
         return pos < 0 or pos > window_width - self.width
@@ -60,7 +63,38 @@ class Player:
     def is_out_of_bounds_y(self, pos):
         return pos < 0 or pos > window_height - self.height
 
-    def move(self):
+    def check_collision(self, other_player):
+        """Verifica se há colisão com outro jogador"""
+        # Checa se os retângulos se sobrepõem (colisão)
+        return (
+            self.x < other_player.x + other_player.width
+            and self.x + self.width > other_player.x
+            and self.y < other_player.y + other_player.height
+            and self.y + self.height > other_player.y
+        )
+
+    def check_collision(self, other_player):
+        """Verifica se há colisão com outro jogador"""
+        # Checa se os retângulos se sobrepõem (colisão)
+        return (
+            self.x < other_player.x + other_player.width
+            and self.x + self.width > other_player.x
+            and self.y < other_player.y + other_player.height
+            and self.y + self.height > other_player.y
+        )
+
+    def notify_collision(self, attacker):
+        """Notifica o jogador de que ele foi atingido, aplicando o impacto"""
+        push_factor = 0.8  # Quanto do impulso é transferido
+        self.velocity_x -= min(10, attacker.velocity_x * push_factor)
+        self.velocity_y -= min(10, attacker.velocity_y * push_factor)
+
+    def on_death(self):
+        # Game over
+        print("Game over!")
+        pygame.quit()
+
+    def move(self, players: list = None):
         keys = pygame.key.get_pressed()
 
         # Controle do tempo para dash
@@ -81,11 +115,14 @@ class Player:
             self.velocity_x += self.last_direction[0] * self.dash_speed
             self.velocity_y += self.last_direction[1] * self.dash_speed
 
-        print("Velocidade X: ", self.velocity_x)
-        print("Velocidade Y: ", self.velocity_y)
+        # print("Velocidade X: ", self.velocity_x)
+        # print("Velocidade Y: ", self.velocity_y)
 
         # Se o dash estiver ativo, continua a lógica de dash
         if self.is_dashing:
+            # TODO: Animação de dash
+
+            # Verificar se o dash acabou
             if current_time - self.last_dash_time >= self.dash_cooldown:
                 self.is_dashing = False
 
@@ -116,17 +153,6 @@ class Player:
         if delta != [0, 0]:
             self.last_direction = delta
 
-        """ # Limitar velocidade máxima
-        if self.velocity_x > self.max_movement_velocity:
-            self.velocity_x = self.max_movement_velocity
-        elif self.velocity_x < -self.max_movement_velocity:
-            self.velocity_x = -self.max_movement_velocity
-
-        if self.velocity_y > self.max_movement_velocity:
-            self.velocity_y = self.max_movement_velocity
-        elif self.velocity_y < -self.max_movement_velocity:
-            self.velocity_y = -self.max_movement_velocity """
-
         # Aplicar fricção se nenhuma tecla for pressionada
         if delta[0] == 0:
             if self.velocity_x > 0:
@@ -148,9 +174,31 @@ class Player:
 
         # Checar e aplicar o rebote nas bordas
         if self.is_out_of_bounds_x(self.x + self.velocity_x):
+            self.lives -= 1
+
+            if self.lives <= 0:
+                self.on_death()
+
+            # Prevenir que o jogador saia da tela (empurrado por outros jogadores)
+            if self.x < 0:
+                self.x = 0
+            elif self.x > window_width - self.width:
+                self.x = window_width - self.width
+
             self.velocity_x = -self.velocity_x * self.bounce_factor
 
         if self.is_out_of_bounds_y(self.y + self.velocity_y):
+            self.lives -= 1
+
+            if self.lives <= 0:
+                self.on_death()
+
+            # Prevenir que o jogador saia da tela (empurrado por outros jogadores)
+            if self.y < 0:
+                self.y = 0
+            elif self.y > window_height - self.height:
+                self.y = window_height - self.height
+
             self.velocity_y = -self.velocity_y * self.bounce_factor
 
         # Atualizar posição
@@ -158,6 +206,28 @@ class Player:
         self.y += self.velocity_y
 
         self.update()
+
+        # Verificar colisões com outros jogadores
+        if players is not None:
+            for other_player in players:
+                if self.check_collision(other_player):
+                    self.velocity_x = -self.velocity_x * self.bounce_factor
+                    self.velocity_y = -self.velocity_y * self.bounce_factor
+
+                    if self.x < other_player.x:
+                        self.x -= 1
+
+                    if self.x > other_player.x:
+                        self.x += 1
+
+                    if self.y < other_player.y:
+                        self.y -= 1
+
+                    if self.y > other_player.y:
+                        self.y += 1
+
+                    # Notifica o jogador que foi atingido
+                    self.notify_collision(other_player)
 
         # print("Velocidade X: ", self.velocity_x)
         # print("Velocidade Y: ", self.velocity_y)

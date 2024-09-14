@@ -13,6 +13,7 @@ height = settings.height
 
 window = pygame.display.set_mode((width, height))
 pygame.display.set_caption("Client")
+pygame.font.init()
 
 
 def redraw_window(window, font, local_player: Player, players: list[Player]):
@@ -33,22 +34,24 @@ def main():
     clock = pygame.time.Clock()
 
     # Inicializa a fonte
-    font = Font("comicsans", 24)
+    font = Font("comicsans", 18)
 
     local_player = n.get_player()
 
     while run:
         clock.tick(60)
 
-        # Enviar dados do jogador local e receber dados de outros jogadores
-        players = n.send(local_player)
-
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 run = False
                 pygame.quit()
 
-        local_player.move()
+        # Aqui, fazemos o seguinte:
+        # 1. Enviamos os dados do jogador local (local_player e movimentos no outro jogador) para o servidor
+        # 2. Recebemos os dados de outros jogadores
+        players = n.send(local_player)
+
+        local_player.move(players)
 
         redraw_window(window, font, local_player, players)
 

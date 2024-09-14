@@ -1,34 +1,53 @@
 {
-    // Para executar diretamente, utilize o atalho Ctrl+Shift+B
-    // Para mais informações, acesse: https://go.microsoft.com/fwlink/?LinkId=733558
-    "version": "2.0.0",
-    "tasks": [
-      {
-        "label": "Servidor",
-        "type": "shell",
-        "command": "python",
-        "args": [
-          "${workspaceFolder}/src/server.py"
-        ],
-        "problemMatcher": [],
-        "group": {
-          "kind": "build",
-        }
-      },
-      {
-        "label": "Cliente",
-        "type": "shell",
-        "command": "python",
-        "args": [
-          "${workspaceFolder}/src/client.py"
-        ],
-        "problemMatcher": [],
-        "group": {
-          "kind": "build",
-        },
-        "runOptions": {
-          "instanceLimit": 3
-        }
+  // Para executar diretamente, utilize o atalho Ctrl+Shift+B
+  // Para mais informações, acesse: https://go.microsoft.com/fwlink/?LinkId=733558
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Testar com clientes",
+      "dependsOn": [
+        "Servidor",
+        "Cliente",
+        "Cliente2"
+      ],
+      "group": {
+        "kind": "build",
       }
-    ]
-  }
+    },
+    {
+      "label": "Servidor",
+      "type": "shell",
+      "command": "python",
+      "args": [
+        "${workspaceFolder}/src/server.py"
+      ],
+      "problemMatcher": [],
+      "group": {
+        "kind": "build",
+      }
+    },
+    {
+      "label": "Cliente",
+      "type": "shell",
+      "command": "python",
+      "args": [
+        "${workspaceFolder}/src/client.py"
+      ],
+      "problemMatcher": [],
+      "group": {
+        "kind": "build",
+      },
+      "runOptions": {
+        "instanceLimit": 3
+      }
+    },
+    {
+      "label": "Cliente2",
+      "type": "shell",
+      "command": "python",
+      "args": [
+        "${workspaceFolder}/src/client.py"
+      ],
+    },
+  ]
+}

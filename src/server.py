@@ -35,6 +35,7 @@ players = list()  # Lista de jogadores conectados
 lock = Lock()  # Lock para evitar condições de corrida
 
 
+# Função para lidar com a conexão de um cliente (cada cliente é uma thread separada)
 def threaded_client(conn, player):
     global connected_players, players
 
@@ -65,15 +66,15 @@ def threaded_client(conn, player):
     print("Jogador atual: ", player)
     print("Jogadores: ", players)
 
-    conn.send(
-        pickle.dumps(players[player])
-    )  # Envia uma mensagem de confirmação ao cliente
+    # Enviamos os dados do jogador atual para o cliente
+    conn.send(pickle.dumps(players[player]))
 
     # Inicializa a variável de resposta
     reply = ""
 
     while True:
         try:
+            # Obtemos os dados do cliente (jogador atual)
             data = pickle.loads(
                 conn.recv(2048)
             )  # 2048 é o tamanho do buffer (em bytes)
@@ -81,7 +82,6 @@ def threaded_client(conn, player):
 
             # Se não encontrarmos dados, a conexão com o cliente foi perdida
             if not data:
-                print("Desconectado")
                 break
             else:
                 # Atualizar os dados do jogador atual
@@ -102,8 +102,8 @@ def threaded_client(conn, player):
     conn.close()
 
     with lock:
-        connected_players -= 1
         players.pop(player)  # Remover o jogador da lista ao desconectar
+        connected_players -= 1
     print(f"Jogadores conectados restantes: {connected_players}")
 
 
@@ -114,6 +114,6 @@ while True:
     with lock:
         player_id = connected_players  # Atribui um ID ao jogador atual
 
-    # Criamos uma nova thread para cada cliente para podermos
+    # Criamos uma nova thread para cada cliente, visto que podemos
     # aceitar múltiplos clientes ao mesmo tempo (multithreading - paralelismo)
     _thread.start_new_thread(threaded_client, (conn, player_id))
