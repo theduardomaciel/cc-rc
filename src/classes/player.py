@@ -30,9 +30,27 @@ class Player:
         self.dash_speed = 15  # Velocidade durante o dash
         self.dash_duration = 500  # Duração do dash em milissegundos
         self.last_dash_time = 0  # Tempo do último dash
+        self.dash_cooldown = 3000  # Cooldown de 3 segundos
 
-    def draw(self, win):
+        # Direction
+        self.last_direction = [0, 0]
+
+    # Inicializar a fonte para exibir o cooldown
+    pygame.font.init()
+
+    def draw(self, win, font):
         pygame.draw.rect(win, self.color, self.rect)
+
+        # Exibir o cooldown acima do jogador
+        current_time = pygame.time.get_ticks()
+        time_since_dash = current_time - self.last_dash_time
+        if time_since_dash < self.dash_cooldown:
+            # Calcular tempo restante
+            remaining_time = (self.dash_cooldown - time_since_dash) / 1000
+
+            # Desenhar texto acima do jogador
+            cooldown_text = font.render(f"{remaining_time:.1f}s", True, (0, 0, 0))
+            win.blit(cooldown_text, (self.x, self.y - 30))
 
     def is_out_of_bounds_x(self, pos):
         return pos < 0 or pos > window_width - self.width
@@ -46,51 +64,52 @@ class Player:
         # Controle do tempo para dash
         current_time = pygame.time.get_ticks()
 
-        # Verifica se o dash pode ser ativado
+        # Verifica se o dash pode ser ativado (respeitando o cooldown)
         if (
             keys[pygame.K_SPACE]
             and not self.is_dashing
-            and current_time - self.last_dash_time > self.dash_duration
+            and current_time - self.last_dash_time > self.dash_cooldown
         ):
             self.is_dashing = True
             self.last_dash_time = current_time
 
-        # Se estiver em dash, aumenta temporariamente a velocidade
+            # Aplicar impulso na direção atual ou última direção de movimento
+            self.velocity_x += self.last_direction[0] * self.dash_speed
+            self.velocity_y += self.last_direction[1] * self.dash_speed
+
+        # Se o dash estiver ativo, continua a lógica de dash
         if self.is_dashing:
-            dash_multiplier = self.dash_speed / self.max_velocity
             if current_time - self.last_dash_time >= self.dash_duration:
                 self.is_dashing = False
-            else:
-                dash_multiplier = 3  # Multiplicador durante o dash
-        else:
-            dash_multiplier = 1  # Movimento normal
 
         delta = [0, 0]
 
         # Movimento com aceleração
         if keys[pygame.K_LEFT]:
             delta[0] = -1
-            self.velocity_x -= self.acceleration * dash_multiplier
+            self.velocity_x -= self.acceleration
         if keys[pygame.K_RIGHT]:
             delta[0] = 1
-            self.velocity_x += self.acceleration * dash_multiplier
+            self.velocity_x += self.acceleration
         if keys[pygame.K_UP]:
             delta[1] = -1
-            self.velocity_y -= self.acceleration * dash_multiplier
+            self.velocity_y -= self.acceleration
         if keys[pygame.K_DOWN]:
             delta[1] = 1
-            self.velocity_y += self.acceleration * dash_multiplier
+            self.velocity_y += self.acceleration
+
+        self.last_direction = delta
 
         # Limitar velocidade máxima
-        if self.velocity_x > self.max_velocity * dash_multiplier:
-            self.velocity_x = self.max_velocity * dash_multiplier
-        elif self.velocity_x < -self.max_velocity * dash_multiplier:
-            self.velocity_x = -self.max_velocity * dash_multiplier
+        if self.velocity_x > self.max_velocity:
+            self.velocity_x = self.max_velocity
+        elif self.velocity_x < -self.max_velocity:
+            self.velocity_x = -self.max_velocity
 
-        if self.velocity_y > self.max_velocity * dash_multiplier:
-            self.velocity_y = self.max_velocity * dash_multiplier
-        elif self.velocity_y < -self.max_velocity * dash_multiplier:
-            self.velocity_y = -self.max_velocity * dash_multiplier
+        if self.velocity_y > self.max_velocity:
+            self.velocity_y = self.max_velocity
+        elif self.velocity_y < -self.max_velocity:
+            self.velocity_y = -self.max_velocity
 
         # Aplicar fricção se nenhuma tecla for pressionada
         if delta[0] == 0:

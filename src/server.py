@@ -1,9 +1,9 @@
 import socket
 import _thread
 import pickle
+from threading import Lock
 
 from classes.player import Player
-
 from utils.settings import Settings
 
 settings = Settings()
@@ -30,8 +30,17 @@ print("Servidor iniciado. Aguardando conexão...")
 
 players = [Player(0, 0, 50, 50, (255, 0, 0)), Player(100, 100, 50, 50, (0, 0, 255))]
 
+connected_players = 0  # Variável para contar jogadores conectados
+lock = Lock()  # Lock para evitar condições de corrida
+
 
 def threaded_client(conn, player):
+    global connected_players
+
+    with lock:
+        connected_players += 1
+    print(f"Jogador {player} conectado. Jogadores conectados: {connected_players}")
+
     conn.send(
         pickle.dumps(players[player])
     )  # Envia uma mensagem de confirmação ao cliente
@@ -51,10 +60,7 @@ def threaded_client(conn, player):
                 print("Desconectado")
                 break
             else:
-                if player == 1:
-                    reply = players[0]
-                else:
-                    reply = players[1]
+                reply = players[1] if player == 0 else players[0]
 
             # print("Recebido: ", data)
             # print("Enviado: ", reply)
@@ -64,16 +70,18 @@ def threaded_client(conn, player):
         except:
             break
 
-    print("Conexão perdida")
+    print(f"Conexão perdida com jogador {player}")
     conn.close()
 
+    with lock:
+        connected_players -= 1
+    print(f"Jogadores conectados restantes: {connected_players}")
 
-currentPlayer = 0
+
 while True:
     conn, addr = s.accept()  # Aceita a conexão do cliente
     print("Conectado à: ", addr)
 
     # Criamos uma nova thread para cada cliente para podermos
     # aceitar múltiplos clientes ao mesmo tempo (multithreading - paralelismo)
-    _thread.start_new_thread(threaded_client, (conn, currentPlayer))
-    currentPlayer += 1
+    _thread.start_new_thread(threaded_client, (conn, connected_players))
