@@ -15,14 +15,14 @@ window = pygame.display.set_mode((width, height))
 pygame.display.set_caption("Client")
 
 
-def redraw_window(window, font, player: Player, player2: Player):
+def redraw_window(window, font, local_player: Player, players: list[Player]):
     window.fill((255, 255, 255))
 
-    if player is not None:
-        player.draw(window, font)
+    local_player.draw(window, font)
 
-    if player2 is not None:
-        player2.draw(window, font)
+    if players is not None:
+        for player in players:
+            player.draw(window)
 
     pygame.display.update()
 
@@ -35,22 +35,22 @@ def main():
     # Inicializa a fonte
     font = Font("comicsans", 24)
 
-    player = n.get_player()
+    local_player = n.get_player()
 
     while run:
         clock.tick(60)
 
-        player2 = n.send(player)
+        # Enviar dados do jogador local e receber dados de outros jogadores
+        players = n.send(local_player)
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 run = False
                 pygame.quit()
 
-        if player is not None:
-            player.move()
+        local_player.move()
 
-        redraw_window(window, font, player, player2)
+        redraw_window(window, font, local_player, players)
 
 
 main()

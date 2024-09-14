@@ -30,10 +30,12 @@ class Network:
 
     def send(self, data):
         try:
-            # Envia dados ao servidor
+            print("Dados enviados:", data)
+
+            # Envia dados ao servidor (jogador local)
             self.client.send(pickle.dumps(data))
 
-            # Recebe a resposta do servidor
-            return pickle.loads(self.client.recv(2048))
+            # Recebe a resposta do servidor (outros jogadores)
+            return pickle.loads(self.client.recv(2048 * 2))
         except socket.error as e:
             print(e)

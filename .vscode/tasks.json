@@ -27,7 +27,7 @@
           "kind": "build",
         },
         "runOptions": {
-          "instanceLimit": 2
+          "instanceLimit": 3
         }
       }
     ]

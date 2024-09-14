@@ -1,7 +1,9 @@
 import socket
 import _thread
 import pickle
+import random
 from threading import Lock
+
 
 from classes.player import Player
 from utils.settings import Settings
@@ -28,18 +30,40 @@ except socket.error as e:
 s.listen(2)
 print("Servidor iniciado. Aguardando conexão...")
 
-players = [Player(0, 0, 50, 50, (255, 0, 0)), Player(100, 100, 50, 50, (0, 0, 255))]
-
 connected_players = 0  # Variável para contar jogadores conectados
+players = list()  # Lista de jogadores conectados
 lock = Lock()  # Lock para evitar condições de corrida
 
 
 def threaded_client(conn, player):
-    global connected_players
+    global connected_players, players
 
     with lock:
         connected_players += 1
     print(f"Jogador {player} conectado. Jogadores conectados: {connected_players}")
+
+    random_position = random.choice(
+        [
+            (0, 0),
+            (settings.width - 50, 0),
+            (0, settings.height - 50),
+            (settings.width - 50, settings.height - 50),
+        ]
+    )
+    random_color = (
+        random.randint(0, 255),
+        random.randint(0, 255),
+        random.randint(0, 255),
+    )
+
+    with lock:
+        # Garantir que a operação de adicionar jogadores à lista é segura
+        players.append(
+            Player(player, random_position[0], random_position[1], 50, 50, random_color)
+        )
+
+    print("Jogador atual: ", player)
+    print("Jogadores: ", players)
 
     conn.send(
         pickle.dumps(players[player])
@@ -60,7 +84,11 @@ def threaded_client(conn, player):
                 print("Desconectado")
                 break
             else:
-                reply = players[1] if player == 0 else players[0]
+                # Atualizar os dados do jogador atual
+                players[player] = data
+
+                # Enviar a lista de jogadores atualizada (exclui o jogador atual da resposta)
+                reply = [p for i, p in enumerate(players) if i != player]
 
             # print("Recebido: ", data)
             # print("Enviado: ", reply)
@@ -75,6 +103,7 @@ def threaded_client(conn, player):
 
     with lock:
         connected_players -= 1
+        players.pop(player)  # Remover o jogador da lista ao desconectar
     print(f"Jogadores conectados restantes: {connected_players}")
 
 
@@ -82,6 +111,9 @@ while True:
     conn, addr = s.accept()  # Aceita a conexão do cliente
     print("Conectado à: ", addr)
 
+    with lock:
+        player_id = connected_players  # Atribui um ID ao jogador atual
+
     # Criamos uma nova thread para cada cliente para podermos
     # aceitar múltiplos clientes ao mesmo tempo (multithreading - paralelismo)
-    _thread.start_new_thread(threaded_client, (conn, connected_players))
+    _thread.start_new_thread(threaded_client, (conn, player_id))

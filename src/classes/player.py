@@ -9,7 +9,9 @@ window_height = settings.height
 
 
 class Player:
-    def __init__(self, x, y, width, height, color):
+    def __init__(self, id, x, y, width, height, color):
+        self.id = id
+
         self.x = x
         self.y = y
         self.width = width
@@ -38,19 +40,20 @@ class Player:
     # Inicializar a fonte para exibir o cooldown
     pygame.font.init()
 
-    def draw(self, win, font):
+    def draw(self, win, font: pygame.font.Font = None):
         pygame.draw.rect(win, self.color, self.rect)
 
-        # Exibir o cooldown acima do jogador
-        current_time = pygame.time.get_ticks()
-        time_since_dash = current_time - self.last_dash_time
-        if time_since_dash < self.dash_cooldown:
-            # Calcular tempo restante
-            remaining_time = (self.dash_cooldown - time_since_dash) / 1000
+        if font is not None:
+            # Exibir o cooldown acima do jogador
+            current_time = pygame.time.get_ticks()
+            time_since_dash = current_time - self.last_dash_time
+            if time_since_dash < self.dash_cooldown:
+                # Calcular tempo restante
+                remaining_time = (self.dash_cooldown - time_since_dash) / 1000
 
-            # Desenhar texto acima do jogador
-            cooldown_text = font.render(f"{remaining_time:.1f}s", True, (0, 0, 0))
-            win.blit(cooldown_text, (self.x, self.y - 30))
+                # Desenhar texto acima do jogador
+                cooldown_text = font.render(f"{remaining_time:.1f}s", True, (0, 0, 0))
+                win.blit(cooldown_text, (self.x, self.y - 30))
 
     def is_out_of_bounds_x(self, pos):
         return pos < 0 or pos > window_width - self.width
