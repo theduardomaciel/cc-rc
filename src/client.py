@@ -1,66 +1,113 @@
-import pygame
-from network import Network
+import sys
+import math
+import random
 
-from classes.font import Font
+import pygame
+
+from network import Network
+from utils.settings import Settings
+from utils.assets import load_image, load_font, rotate_image
 from classes.player import Player
 
-from utils.settings import Settings
 
-settings = Settings()
+class Game:
+    def __init__(self):
+        pygame.init()
+        pygame.display.set_caption("Dash Muse")
 
-width = settings.width
-height = settings.height
+        self.settings = Settings()
 
-window = pygame.display.set_mode((width, height))
-pygame.display.set_caption("Client")
-pygame.font.init()
+        self.width = self.settings.width
+        self.height = self.settings.height
+
+        self.screen = pygame.display.set_mode((self.width, self.height))
+        self.display = pygame.Surface((self.width, self.height))
+        self.display_rotation = 0
+
+        self.clock = pygame.time.Clock()
+
+        self.assets = {
+            "stars": load_image("stars.png"),
+            "background": load_image("background.png"),
+            "entity": load_image("entity_v2.png"),
+        }
+
+        # Escala os elementos do menu principal para o tamanho da tela
+        self.assets["background"] = pygame.transform.scale(
+            self.assets["background"], (self.width, self.height)
+        )
+
+        # Adiciona as decorações da tela
+        """ main_deco(self)
+        main_menu(self) """
+
+        self.background_rotation = 0
+        self.entity_rotation = 0
+        self.screenshake = 0
+
+    def run(self):
+        while True:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
+
+            # Atualiza as rotações
+            self.background_rotation = (self.background_rotation + 0.1) % 360  # Lenta
+            self.entity_rotation = (self.entity_rotation - 0.5) % 360  # Mais rápida
+
+            # Chama o método que desenha os elementos
+            main_deco(self)
+            main_menu(self)
+
+            # Atualiza a tela
+            pygame.display.update()
 
 
-def redraw_window(
-    window: pygame.Surface, font, local_player: Player, players: list[Player]
-):
-    window.fill((255, 255, 255))
+def main_deco(game: Game):
+    # Preenche a tela com fundo preto
+    game.screen.fill((0, 0, 0))
 
-    local_player.draw(window, font)
+    # Desenha as estrelas atrás do background
+    game.screen.blit(game.assets["stars"], (0, 0))  # atrás do background
 
-    if players is not None:
-        for player in players:
-            player.draw(window)
+    # Rotaciona e desenha o background
+    bg_center = (game.width // 2, game.height // 2)
+    rotated_bg, bg_rect = rotate_image(
+        game.assets["background"], game.background_rotation, bg_center
+    )
+    game.screen.blit(rotated_bg, bg_rect)
 
-    window.blit(
-        font.render("Jogadores conectados: " + str(len(players) + 1), True, (0, 0, 0)),
-        (10, 10),
+    # Rotaciona e desenha a entidade
+    entity_center = (game.width // 2, game.height // 2 + 65)
+    rotated_entity, entity_rect = rotate_image(
+        game.assets["entity"], game.entity_rotation, entity_center
+    )
+    game.screen.blit(rotated_entity, entity_rect)
+
+    # Desenha as bordas
+    border_offset = 20
+    border_radius = 10
+    pygame.draw.rect(
+        game.screen,
+        (255, 255, 255),
+        (
+            border_offset,  # Coordenada x inicial
+            border_offset,  # Coordenada y inicial
+            game.width - 2 * border_offset,  # Largura ajustada
+            game.height - 2 * border_offset,  # Altura ajustada
+        ),
+        2,
+        border_radius,
     )
 
-    pygame.display.update()
+
+def main_menu(game: Game):
+    # Adiciona o título do jogo
+    font = load_font("ReemKufiInk-Bold.ttf", 72)
+    text_surface = font.render("Dash Muse", True, (255, 255, 255))
+    text_rect = text_surface.get_rect(center=(game.width // 2, 150))
+    game.screen.blit(text_surface, text_rect)
 
 
-def main():
-    run = True
-    n = Network()
-    clock = pygame.time.Clock()
-
-    # Inicializa a fonte
-    font = Font("comicsans", 18)
-
-    local_player = n.get_player()
-
-    while run:
-        clock.tick(60)
-
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                run = False
-                pygame.quit()
-
-        # Aqui, fazemos o seguinte:
-        # 1. Enviamos os dados do jogador local (local_player e movimentos no outro jogador) para o servidor
-        # 2. Recebemos os dados de outros jogadores
-        players = n.send(local_player)
-
-        local_player.move(players)
-
-        redraw_window(window, font, local_player, players)
-
-
-main()
+Game().run()

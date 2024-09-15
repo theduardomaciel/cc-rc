@@ -20,7 +20,7 @@ class Player:
         self.rect = (x, y, width, height)
 
         # Lives
-        self.lives = 3
+        self.lives = 10
 
         # Physics
         self.velocity_x = 0
