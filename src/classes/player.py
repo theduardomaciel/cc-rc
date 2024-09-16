@@ -83,18 +83,20 @@ class Player:
             and self.y + self.height > other_player.y
         )
 
-    def notify_collision(self, attacker):
+    def notify_collision(self, attacker, on_shake):
         """Notifica o jogador de que ele foi atingido, aplicando o impacto"""
         push_factor = 0.8  # Quanto do impulso é transferido
         self.velocity_x -= min(10, attacker.velocity_x * push_factor)
         self.velocity_y -= min(10, attacker.velocity_y * push_factor)
 
+        on_shake(10)
+
     def on_death(self):
         # Game over
         print("Game over!")
-        pygame.quit()
+        # pygame.quit()
 
-    def move(self, players: list = None):
+    def move(self, interactions, players: list = None):
         keys = pygame.key.get_pressed()
 
         # Controle do tempo para dash
@@ -175,9 +177,13 @@ class Player:
         # Checar e aplicar o rebote nas bordas
         if self.is_out_of_bounds_x(self.x + self.velocity_x):
             self.lives -= 1
+            interactions["on_damage"]()
 
             if self.lives <= 0:
                 self.on_death()
+                interactions["on_shake"](15)
+            else:
+                interactions["on_shake"](50)
 
             # Prevenir que o jogador saia da tela (empurrado por outros jogadores)
             if self.x < 0:
@@ -189,9 +195,13 @@ class Player:
 
         if self.is_out_of_bounds_y(self.y + self.velocity_y):
             self.lives -= 1
+            interactions["on_damage"]()
 
             if self.lives <= 0:
                 self.on_death()
+                interactions["on_shake"](15)
+            else:
+                interactions["on_shake"](50)
 
             # Prevenir que o jogador saia da tela (empurrado por outros jogadores)
             if self.y < 0:
@@ -225,9 +235,11 @@ class Player:
 
                     if self.y > other_player.y:
                         self.y += 1
+                        
+                    interactions["on_shake"](10)
 
                     # Notifica o jogador que foi atingido
-                    self.notify_collision(other_player)
+                    self.notify_collision(other_player, interactions["on_shake"])
 
         # print("Velocidade X: ", self.velocity_x)
         # print("Velocidade Y: ", self.velocity_y)

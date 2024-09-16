@@ -51,7 +51,7 @@ class Game:
 
         self.background_rotation = 0
         self.entity_rotation = 0
-        self.screenshake = 0
+        self.screenshake = 150
         self.damage_alpha = 255
 
         self.main_menu = MainMenu(self)
@@ -75,18 +75,27 @@ class Game:
                     player.draw(self.screen)
                 self.screen.blit(
                     self.font.render(
-                        "Jogadores conectados: " + str(len(players) + 1),
+                        "Jogadores restantes: " + str(len(players) + 1),
                         True,
                         (255, 255, 255),
                     ),
                     (self.border_offset + 25, self.border_offset + 25),
                 )
 
+    def on_shake(self, intensity: int):
+        print("Tremeu!")
+        self.screenshake = intensity
+
+    def on_damage(self):
+        print("Tomou dano!")
+        self.damage_alpha = 255
+
     def run(self):
         clock = pygame.time.Clock()
 
         while True:
             clock.tick(60)
+            self.screenshake = max(0, self.screenshake - 1)
 
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -122,7 +131,13 @@ class Game:
                             if player.id != self.player.id
                         ]
 
-                        self.player.move(other_players)
+                        self.player.move(
+                            {
+                                "on_shake": self.on_shake,
+                                "on_damage": self.on_damage,
+                            },
+                            other_players,
+                        )
                         self.render_players(self.player, other_players)
 
                     elif match.state == "intermission":
@@ -135,6 +150,15 @@ class Game:
                 wait_lobby_overlay(self)
             elif self.state == "intermission":
                 intermission_timer_overlay(self, match)
+
+            screenshake_offset = (
+                random.random() * self.screenshake - self.screenshake / 2,
+                random.random() * self.screenshake - self.screenshake / 2,
+            )
+            self.screen.blit(
+                pygame.transform.scale(self.screen, self.screen.get_size()),
+                screenshake_offset,
+            )
 
             # Atualiza a tela
             pygame.display.update()
