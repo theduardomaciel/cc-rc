@@ -4,7 +4,17 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "Testar com clientes",
+      "label": "Testar com 1 cliente",
+      "dependsOn": [
+        "Servidor",
+        "Cliente",
+      ],
+      "group": {
+        "kind": "build",
+      }
+    },
+    {
+      "label": "Testar com 2 clientes",
       "dependsOn": [
         "Servidor",
         "Cliente",

@@ -1,10 +1,11 @@
 import socket
-import _thread
+import pygame
 import pickle
+import _thread
 from random import randrange, randint
 from threading import Lock
 
-
+from classes.match import Match
 from classes.player import Player
 from utils.settings import Settings
 
@@ -30,19 +31,11 @@ except socket.error as e:
 s.listen(2)
 print("Servidor iniciado. Aguardando conexão...")
 
-connected_players = 0  # Variável para contar jogadores conectados
-players = list()  # Lista de jogadores conectados
+match = Match(0)  # Inicializa a partida
 lock = Lock()  # Lock para evitar condições de corrida
 
 
-# Função para lidar com a conexão de um cliente (cada cliente é uma thread separada)
-def threaded_client(conn, player):
-    global connected_players, players
-
-    with lock:
-        connected_players += 1
-    print(f"Jogador {player} conectado. Jogadores conectados: {connected_players}")
-
+def generate_player(id: int) -> Player:
     random_position = randrange(0, settings.width - 50), randrange(
         0, settings.height - 50
     )
@@ -52,44 +45,61 @@ def threaded_client(conn, player):
         randint(0, 255),
     )
 
+    return Player(id, random_position[0], random_position[1], 50, 50, random_color)
+
+
+# Função para lidar com a conexão de um cliente (cada cliente é uma thread separada)
+def threaded_client(conn, player):
+    global match
+
+    with lock:
+        match.connected_players += 1
+    print(
+        f"Jogador {player} conectado. Jogadores conectados: {match.connected_players}"
+    )
+
     with lock:
         # Garantir que a operação de adicionar jogadores à lista é segura
-        players.append(
-            Player(player, random_position[0], random_position[1], 50, 50, random_color)
-        )
+        if match.connected_players <= match.max_players:
+            match.add_player(generate_player(player))
+        else:
+            return
 
     print("Jogador atual: ", player)
-    print("Jogadores: ", players)
+    print("Jogadores: ", match.players)
 
     # Enviamos os dados do jogador atual para o cliente
-    conn.send(pickle.dumps(players[player]))
-
-    # Inicializa a variável de resposta
-    reply = ""
+    conn.send(pickle.dumps(match.players[player]))
 
     while True:
         try:
-            # Obtemos os dados do cliente (jogador atual)
-            data = pickle.loads(
-                conn.recv(2048)
-            )  # 2048 é o tamanho do buffer (em bytes)
-            players[player] = data
+            # Obtemos os dados atualizados do cliente (jogador atual)
+            data = pickle.loads(conn.recv(2048))
 
             # Se não encontrarmos dados, a conexão com o cliente foi perdida
             if not data:
                 break
             else:
-                # Atualizar os dados do jogador atual
-                players[player] = data
+                # Caso um jogador tenha entrado, verificamos se a partida pode ser iniciada
+                if match.state == "waiting" and match.connected_players > 1:
+                    print("Agendando partida...")
+                    match.schedule_intermission()
 
-                # Enviar a lista de jogadores atualizada (exclui o jogador atual da resposta)
-                reply = [p for i, p in enumerate(players) if i != player]
+                if data == "reset":
+                    match.start()
+                else:
+                    # Atualizamos os dados do jogador atual
+                    match.players[player] = data
+
+            # Verifica se o intervalo entre partidas acabou
+            if match.state == "intermission" and match.connected_players > 1:
+                match.check_intermission_timer()
 
             # print("Recebido: ", data)
             # print("Enviado: ", reply)
 
-            # Enviando a resposta de volta ao cliente (codificada em um objeto de bytes)
-            conn.sendall(pickle.dumps(reply))
+            # Enviando a resposta de para todos os clientes com os dados atualizados
+            conn.sendall(pickle.dumps(match))
         except:
             break
 
@@ -97,9 +107,9 @@ def threaded_client(conn, player):
     conn.close()
 
     with lock:
-        players.pop(player)  # Remover o jogador da lista ao desconectar
-        connected_players -= 1
-    print(f"Jogadores conectados restantes: {connected_players}")
+        match.remove_player(match.players[player])
+        match.connected_players -= 1
+    print(f"Jogadores conectados restantes: {match.connected_players}")
 
 
 while True:
@@ -107,7 +117,12 @@ while True:
     print("Conectado à: ", addr)
 
     with lock:
-        player_id = connected_players  # Atribui um ID ao jogador atual
+        player_id = match.connected_players  # Atribui um ID ao jogador atual
+
+    # pygame.time.get_ticks() = current_time
+    time_since_last_intermission = (
+        pygame.time.get_ticks() - match.last_intermission_time
+    )
 
     # Criamos uma nova thread para cada cliente, visto que podemos
     # aceitar múltiplos clientes ao mesmo tempo (multithreading - paralelismo)

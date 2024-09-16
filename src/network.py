@@ -1,7 +1,7 @@
 import socket
 import pickle
 
-from classes.player import Player
+from classes.match import Match
 from utils.settings import Settings
 
 settings = Settings()
@@ -13,10 +13,10 @@ class Network:
         self.server = settings.ip_address
         self.port = settings.port
         self.address = (self.server, self.port)
-        self.player = self.connect()
+        self.player_id = self.connect()
 
-    def get_player(self) -> Player:
-        return self.player
+    def get_player_id(self):
+        return self.player_id
 
     def connect(self):
         try:
@@ -24,11 +24,14 @@ class Network:
             self.client.connect(self.address)
 
             # Recebe a resposta do servidor
-            return pickle.loads(self.client.recv(2048 * 2))
+            return pickle.loads(self.client.recv(2048))
         except socket.error as e:
             print(e)
 
-    def send(self, data):
+    def disconnect(self):
+        self.client.close()
+
+    def send(self, data) -> Match:
         try:
             # print("Dados enviados:", data)
 

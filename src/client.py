@@ -9,6 +9,7 @@ from utils.settings import Settings
 from utils.assets import load_image, load_font, rotate_image
 from classes.player import Player
 from classes.button import Button
+from classes.match import Match
 
 
 class Game:
@@ -31,6 +32,7 @@ class Game:
             "background": load_image("background.png"),
             "entity": load_image("entity_v4.png"),
             "eye": load_image("eye.png"),
+            "damage": load_image("damage.png"),
         }
 
         self.border_offset = 20
@@ -50,13 +52,42 @@ class Game:
         self.background_rotation = 0
         self.entity_rotation = 0
         self.screenshake = 0
-
-        self.state = "menu"  # pode ser: menu, game, spectate, endgame, elimination
+        self.damage_alpha = 255
 
         self.main_menu = MainMenu(self)
 
+        self.font = load_font("ReemKufiInk-Regular.ttf", 14)
+
+        self.state = "menu"  # pode ser: menu, game, spectate, endgame, elimination
+
+        self.network = None
+        self.player = None
+
+    def join_match(self):
+        self.network = Network()
+        self.player = self.network.get_player_id()
+
+    def render_players(self, local_player: Player, players: list[Player]):
+        if local_player:
+            local_player.draw(self.screen, self.font)
+            if players is not None:
+                for player in players:
+                    player.draw(self.screen)
+                self.screen.blit(
+                    self.font.render(
+                        "Jogadores conectados: " + str(len(players) + 1),
+                        True,
+                        (255, 255, 255),
+                    ),
+                    (self.border_offset + 25, self.border_offset + 25),
+                )
+
     def run(self):
+        clock = pygame.time.Clock()
+
         while True:
+            clock.tick(60)
+
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
@@ -66,13 +97,44 @@ class Game:
             self.background_rotation = (self.background_rotation + 0.1) % 360  # Lenta
             self.entity_rotation = (self.entity_rotation - 0.5) % 360  # Mais rápida
 
-            # Chama o método que desenha os elementos
+            # Chama os métodos que desenha os elementos visuais
             main_deco(self)
+            damage_overlay(self)
 
+            if self.network:
+                match = None
+
+                try:
+                    match = self.network.send(self.player)
+                except Exception as e:
+                    print(f"Erro ao obter a partida: {e}")
+                    pygame.quit()
+
+                # Administra o estado do jogo na rede
+                if match:
+                    if match.state == "running":
+                        self.state = "game"
+                        # Jogo em andamento
+
+                        other_players = [
+                            player
+                            for player in match.players
+                            if player.id != self.player.id
+                        ]
+
+                        self.player.move(other_players)
+                        self.render_players(self.player, other_players)
+
+                    elif match.state == "intermission":
+                        self.state = "intermission"
+
+            # Desenha o overlay de espectador
             if self.state == "menu":
                 self.main_menu.run(self)
             elif self.state == "spectate":
                 wait_lobby_overlay(self)
+            elif self.state == "intermission":
+                intermission_timer_overlay(self, match)
 
             # Atualiza a tela
             pygame.display.update()
@@ -108,9 +170,83 @@ def main_deco(game: Game):
     )
 
 
+def damage_overlay(game: Game):
+    # Overlay vermelho para indicar dano que aparece suavemente
+    game.assets["damage"] = pygame.transform.scale(
+        game.assets["damage"], (game.width, game.height)
+    )
+
+    if game.damage_alpha > 0:
+        game.damage_alpha = max(0, game.damage_alpha - 5)
+        game.assets["damage"].set_alpha(game.damage_alpha)
+
+    game.screen.blit(game.assets["damage"], (0, 0))
+
+    """ if eliminated:
+        # Adiciona o texto de eliminação no centro da tela
+        font = load_font("ReemKufiInk-Bold.ttf", 36)
+        text_surface = font.render("ELIMINADO!", True, (255, 255, 255))
+
+        game.screen.blit(
+            text_surface,
+            (
+                game.width // 2 - text_surface.get_width() // 2,
+                game.height // 2 - text_surface.get_height() // 2,
+            ),
+        ) """
+
+
+def intermission_timer_overlay(game: Game, match: Match):
+    # Adiciona o texto "Intermissão" no centro da tela
+    font = load_font("ReemKufiInk-Bold.ttf", 36)
+    text_surface = font.render("Intermissão", True, (255, 255, 255))
+
+    game.screen.blit(
+        text_surface,
+        (
+            game.width // 2 - text_surface.get_width() // 2,
+            game.height // 2 - text_surface.get_height() // 2,
+        ),
+    )
+
+    # Adiciona o texto "Aguardando partida..." no centro da tela
+    font = load_font("ReemKufiInk-Regular.ttf", 28)
+    text_surface = font.render("Aguardando partida...", True, (255, 255, 255))
+
+    game.screen.blit(
+        text_surface,
+        (
+            game.width // 2 - text_surface.get_width() // 2,
+            game.height // 2 - text_surface.get_height() // 2 + 50,
+        ),
+    )
+
+    current_time = pygame.time.get_ticks()
+
+    # Adiciona o texto "Tempo restante: X segundos" no canto inferior direito
+    font = load_font("ReemKufiInk-Regular.ttf", 14)
+    text_surface = font.render(
+        f"Tempo restante: {(match.intermission_duration - (current_time - match.last_intermission_time)) // 1000} segundos",
+        True,
+        (255, 255, 255),
+    )
+
+    game.screen.blit(
+        text_surface,
+        (
+            game.width - text_surface.get_width() - game.border_offset - 10,
+            game.height - text_surface.get_height() - game.border_offset,
+        ),
+    )
+
+
 def play_game(game: Game):
     print("Entrando no jogo...")
-    game.state = "spectate"
+    try:
+        game.join_match()
+        game.state = "spectate"
+    except Exception as e:
+        print(f"Erro ao entrar na partida: {e}")
 
 
 def wait_lobby_overlay(game: Game):

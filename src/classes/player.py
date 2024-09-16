@@ -43,7 +43,7 @@ class Player:
         pygame.draw.rect(win, self.color, self.rect)
 
         if font is not None:
-            lives_text = font.render(f"{self.lives} vida{self.lives != 1 and "s" or ""}", True, (0, 0, 0))
+            lives_text = font.render(f"{self.lives} vida{self.lives != 1 and "s" or ""}", True, (255, 255, 255))
             win.blit(lives_text, (self.x + self.width/2 - lives_text.get_width()/2, self.y - 30))
 
             # Exibir o cooldown acima do jogador
@@ -54,7 +54,7 @@ class Player:
                 remaining_time = (self.dash_cooldown - time_since_dash) / 1000
 
                 # Desenhar texto acima do jogador
-                cooldown_text = font.render(f"{remaining_time:.1f}s", True, (0, 0, 0))
+                cooldown_text = font.render(f"{remaining_time:.1f}s", True, (255, 255, 255))
                 win.blit(cooldown_text, (self.x + self.width/2 - cooldown_text.get_width()/2, self.y + 40))
 
     def is_out_of_bounds_x(self, pos):
