@@ -13,10 +13,10 @@ class Network:
         self.server = settings.ip_address
         self.port = settings.port
         self.address = (self.server, self.port)
-        self.player_id = self.connect()
+        self.player = self.connect()
 
-    def get_player_id(self):
-        return self.player_id
+    def get_player(self):
+        return self.player
 
     def connect(self):
         try:

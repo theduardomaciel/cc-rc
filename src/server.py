@@ -82,12 +82,14 @@ def threaded_client(conn, player):
             else:
                 # Caso um jogador tenha entrado, verificamos se a partida pode ser iniciada
                 if match.state == "waiting" and match.connected_players > 1:
-                    print("Agendando partida...")
+                    print("Iniciando partida em alguns segundos!...")
                     match.schedule_intermission()
 
                 if data == "reset":
                     match.start()
-                else:
+                elif data is not None:
+                    # print("Atualizando dados do jogador ", player)
+
                     # Atualizamos os dados do jogador atual
                     match.players[player] = data
 

@@ -41,6 +41,10 @@ class Game:
         self.assets["background"] = pygame.transform.scale(
             self.assets["background"], (self.width, self.height)
         )
+        # Overlay vermelho para indicar dano que aparece suavemente
+        self.assets["damage"] = pygame.transform.scale(
+            self.assets["damage"], (self.width, self.height)
+        )
 
         # Escala a entidade para metade do tamanho original
         entity_width = self.assets["entity"].get_width() // 2
@@ -51,8 +55,8 @@ class Game:
 
         self.background_rotation = 0
         self.entity_rotation = 0
-        self.screenshake = 150
-        self.damage_alpha = 255
+        self.screenshake = 0
+        self.damage_alpha = 0
 
         self.main_menu = MainMenu(self)
 
@@ -65,22 +69,24 @@ class Game:
 
     def join_match(self):
         self.network = Network()
-        self.player = self.network.get_player_id()
+        self.player = self.network.get_player()
 
-    def render_players(self, local_player: Player, players: list[Player]):
-        if local_player:
-            local_player.draw(self.screen, self.font)
-            if players is not None:
-                for player in players:
-                    player.draw(self.screen)
-                self.screen.blit(
-                    self.font.render(
-                        "Jogadores restantes: " + str(len(players) + 1),
-                        True,
-                        (255, 255, 255),
-                    ),
-                    (self.border_offset + 25, self.border_offset + 25),
-                )
+    def render_players(self, players: list[Player]):
+        if self.player.lives > 0:
+            self.player.draw(self.screen, self.font)
+
+            self.screen.blit(
+                self.font.render(
+                    "Jogadores restantes: " + str(len(players) + 1),
+                    True,
+                    (255, 255, 255),
+                ),
+                (self.border_offset + 25, self.border_offset + 25),
+            )
+
+        if players is not None:
+            for player in players:
+                player.draw(self.screen)
 
     def on_shake(self, intensity: int):
         print("Tremeu!")
@@ -125,31 +131,33 @@ class Game:
                         self.state = "game"
                         # Jogo em andamento
 
-                        other_players = [
+                        # Remove o jogador local da lista de jogadores e filtrar os jogadores mortos
+                        players = [
                             player
                             for player in match.players
-                            if player.id != self.player.id
+                            if player.id != self.player.id and player.lives > 0
                         ]
 
-                        self.player.move(
-                            {
-                                "on_shake": self.on_shake,
-                                "on_damage": self.on_damage,
-                            },
-                            other_players,
-                        )
-                        self.render_players(self.player, other_players)
+                        # Atualiza a posição do jogador local (se ainda estiver vivo)
+                        if self.player.lives > 0:
+                            self.player.move(
+                                {
+                                    "on_shake": self.on_shake,
+                                    "on_damage": self.on_damage,
+                                },
+                                players,
+                            )
+                        else:
+                            spectate_overlay(self)
 
-                    elif match.state == "intermission":
-                        self.state = "intermission"
-
-            # Desenha o overlay de espectador
-            if self.state == "menu":
+                        self.render_players(players)
+                    else:
+                        if match.state == "waiting":
+                            wait_lobby_overlay(self)
+                        elif match.state == "intermission":
+                            intermission_timer_overlay(self, match)
+            else:
                 self.main_menu.run(self)
-            elif self.state == "spectate":
-                wait_lobby_overlay(self)
-            elif self.state == "intermission":
-                intermission_timer_overlay(self, match)
 
             screenshake_offset = (
                 random.random() * self.screenshake - self.screenshake / 2,
@@ -195,29 +203,24 @@ def main_deco(game: Game):
 
 
 def damage_overlay(game: Game):
-    # Overlay vermelho para indicar dano que aparece suavemente
-    game.assets["damage"] = pygame.transform.scale(
-        game.assets["damage"], (game.width, game.height)
-    )
-
     if game.damage_alpha > 0:
         game.damage_alpha = max(0, game.damage_alpha - 5)
         game.assets["damage"].set_alpha(game.damage_alpha)
+        game.screen.blit(game.assets["damage"], (0, 0))
 
-    game.screen.blit(game.assets["damage"], (0, 0))
+        if game.player and game.player.lives <= 0:
+            # Adiciona o texto de eliminação no centro da tela
+            font = load_font("ReemKufiInk-Bold.ttf", 36)
+            text_surface = font.render("ELIMINADO!", True, (255, 255, 255))
+            text_surface.set_alpha(game.damage_alpha)
 
-    """ if eliminated:
-        # Adiciona o texto de eliminação no centro da tela
-        font = load_font("ReemKufiInk-Bold.ttf", 36)
-        text_surface = font.render("ELIMINADO!", True, (255, 255, 255))
-
-        game.screen.blit(
-            text_surface,
-            (
-                game.width // 2 - text_surface.get_width() // 2,
-                game.height // 2 - text_surface.get_height() // 2,
-            ),
-        ) """
+            game.screen.blit(
+                text_surface,
+                (
+                    game.width // 2 - text_surface.get_width() // 2,
+                    game.height // 2 - text_surface.get_height() // 2,
+                ),
+            )
 
 
 def intermission_timer_overlay(game: Game, match: Match):
@@ -268,21 +271,16 @@ def play_game(game: Game):
     print("Entrando no jogo...")
     try:
         game.join_match()
-        game.state = "spectate"
     except Exception as e:
         print(f"Erro ao entrar na partida: {e}")
 
 
 def wait_lobby_overlay(game: Game):
-    # Adiciona o texto "Aguardando partida..." no centro da tela
+    # Adiciona o texto de espera no centro da tela
     font = load_font("ReemKufiInk-Regular.ttf", 28)
     text_surface = font.render(
         "Aguardando por mais 1 jogador...", True, (255, 255, 255)
     )
-
-    # Adiciona o texto "Pressione ESC para sair" no canto inferior direito
-    """ font = load_font("ReemKufiInk-Regular.ttf", 14)
-    text_surface_esc = font.render("Pressione ESC para sair", True, (255, 255, 255)) """
 
     game.screen.blit(
         text_surface,
@@ -291,20 +289,6 @@ def wait_lobby_overlay(game: Game):
             game.height // 2 - text_surface.get_height() // 2,
         ),
     )
-
-    """ game.screen.blit(
-        text_surface_esc,
-        (
-            game.width - text_surface_esc.get_width() - game.border_offset - 10,
-            game.height - text_surface_esc.get_height() - game.border_offset,
-        ),
-    )
-
-    for event in pygame.event.get():
-        if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_ESCAPE:
-                print("Saindo da partida...")
-                game.state = "menu" """
 
 
 def spectate_overlay(game: Game):
