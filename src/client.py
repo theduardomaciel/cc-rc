@@ -5,6 +5,7 @@ import random
 import pygame
 
 from network import Network
+from utils.strings import format_seconds
 from utils.settings import Settings
 from utils.assets import load_image, load_font, rotate_image
 from classes.player import Player
@@ -62,9 +63,10 @@ class Game:
 
         self.font = load_font("ReemKufiInk-Regular.ttf", 14)
 
-        self.state = "menu"  # pode ser: menu, game, spectate, endgame, elimination
+        self.state = "menu"  # pode ser: menu, game, gameover
 
         self.network = None
+        self.ping = 0
         self.player = None
 
     def join_match(self):
@@ -73,27 +75,27 @@ class Game:
 
     def render_players(self, players: list[Player]):
         if self.player.lives > 0:
-            self.player.draw(self.screen, self.font)
+            self.player.draw(self.screen, self.font, True)
 
-            self.screen.blit(
+            """ self.screen.blit(
                 self.font.render(
-                    "Jogadores restantes: " + str(len(players) + 1),
+                    "Ping: " + str(self.ping) + "ms",
                     True,
                     (255, 255, 255),
                 ),
                 (self.border_offset + 25, self.border_offset + 25),
-            )
+            ) """
 
         if players is not None:
             for player in players:
-                player.draw(self.screen)
+                player.draw(self.screen, self.font)
 
     def on_shake(self, intensity: int):
-        print("Tremeu!")
+        # print("Tremeu!")
         self.screenshake = intensity
 
     def on_damage(self):
-        print("Tomou dano!")
+        # print("Tomou dano!")
         self.damage_alpha = 255
 
     def run(self):
@@ -119,17 +121,24 @@ class Game:
             if self.network:
                 match = None
 
+                start = pygame.time.get_ticks()
+
                 try:
                     match = self.network.send(self.player)
                 except Exception as e:
                     print(f"Erro ao obter a partida: {e}")
                     pygame.quit()
 
+                end = pygame.time.get_ticks()
+
+                # print(f"Tempo de resposta: {end - start}ms")
+                self.player.ping = end - start
+
                 # Administra o estado do jogo na rede
                 if match:
                     if match.state == "running":
-                        self.state = "game"
                         # Jogo em andamento
+                        self.state = "game"
 
                         # Remove o jogador local da lista de jogadores e filtrar os jogadores mortos
                         players = [
@@ -151,11 +160,23 @@ class Game:
                             spectate_overlay(self)
 
                         self.render_players(players)
+
+                    elif match.state == "ended":
+                        # Partida finalizada
+                        game_over_overlay(self, match)
+
+                        if self.state == "game":
+                            print(
+                                "Partida acabou, agora o o novo player é: ",
+                                match.players[self.player.id],
+                            )
+                            self.player = match.players[self.player.id]
+                            self.state = "gameover"
+
+                    elif match.state == "waiting" and match.connected_players >= 2:
+                        intermission_timer_overlay(self, match)
                     else:
-                        if match.state == "waiting":
-                            wait_lobby_overlay(self)
-                        elif match.state == "intermission":
-                            intermission_timer_overlay(self, match)
+                        wait_lobby_overlay(self)
             else:
                 self.main_menu.run(self)
 
@@ -223,10 +244,11 @@ def damage_overlay(game: Game):
             )
 
 
-def intermission_timer_overlay(game: Game, match: Match):
-    # Adiciona o texto "Intermissão" no centro da tela
+def game_over_overlay(game: Game, match: Match):
+    # Adiciona o texto "Jogador {nome} venceu!" no centro da tela
     font = load_font("ReemKufiInk-Bold.ttf", 36)
-    text_surface = font.render("Intermissão", True, (255, 255, 255))
+
+    text_surface = font.render(f"{game.player.name} venceu!", True, (255, 255, 255))
 
     game.screen.blit(
         text_surface,
@@ -237,8 +259,16 @@ def intermission_timer_overlay(game: Game, match: Match):
     )
 
     # Adiciona o texto "Aguardando partida..." no centro da tela
-    font = load_font("ReemKufiInk-Regular.ttf", 28)
-    text_surface = font.render("Aguardando partida...", True, (255, 255, 255))
+    font = load_font("ReemKufiInk-Regular.ttf", 18)
+
+    remaining_time = match.intermission_duration - (
+        pygame.time.get_ticks() - match.last_intermission_time
+    )  # Tempo restante em milissegundos
+    text_surface = font.render(
+        f"Nova partida iniciando em {format_seconds(remaining_time)}...",
+        True,
+        (255, 255, 255),
+    )
 
     game.screen.blit(
         text_surface,
@@ -248,12 +278,28 @@ def intermission_timer_overlay(game: Game, match: Match):
         ),
     )
 
-    current_time = pygame.time.get_ticks()
 
-    # Adiciona o texto "Tempo restante: X segundos" no canto inferior direito
-    font = load_font("ReemKufiInk-Regular.ttf", 14)
+def intermission_timer_overlay(game: Game, match: Match):
+    # Adiciona o texto "Intermissão" no centro da tela
+    font = load_font("ReemKufiInk-Bold.ttf", 36)
+    text_surface = font.render("Aguardando jogadores...", True, (255, 255, 255))
+
+    game.screen.blit(
+        text_surface,
+        (
+            game.width // 2 - text_surface.get_width() // 2,
+            game.height // 2 - text_surface.get_height() // 2,
+        ),
+    )
+
+    # Adiciona o texto "Aguardando partida..." no centro da tela
+    remaining_time = match.intermission_duration - (
+        pygame.time.get_ticks() - match.last_intermission_time
+    )  # Tempo restante em milissegundos
+
+    font = load_font("ReemKufiInk-Regular.ttf", 18)
     text_surface = font.render(
-        f"Tempo restante: {(match.intermission_duration - (current_time - match.last_intermission_time)) // 1000} segundos",
+        f"A partida iniciará em {format_seconds(remaining_time)}...",
         True,
         (255, 255, 255),
     )
@@ -261,8 +307,24 @@ def intermission_timer_overlay(game: Game, match: Match):
     game.screen.blit(
         text_surface,
         (
-            game.width - text_surface.get_width() - game.border_offset - 10,
-            game.height - text_surface.get_height() - game.border_offset,
+            game.width // 2 - text_surface.get_width() // 2,
+            game.height // 2 - text_surface.get_height() // 2 + 50,
+        ),
+    )
+
+    # Adiciona o texto "Tempo restante: X segundos" no canto inferior direito
+    font = load_font("ReemKufiInk-Regular.ttf", 14)
+    text_surface = font.render(
+        f"{match.connected_players}/{match.max_players} jogadores",
+        True,
+        (255, 255, 255),
+    )
+
+    game.screen.blit(
+        text_surface,
+        (
+            game.width // 2 - text_surface.get_width() // 2,
+            game.height - text_surface.get_height() - game.border_offset - 25,
         ),
     )
 
@@ -289,6 +351,25 @@ def wait_lobby_overlay(game: Game):
             game.height // 2 - text_surface.get_height() // 2,
         ),
     )
+
+    # Adiciona o texto de saída no canto central inferior
+    font = load_font("ReemKufiInk-Regular.ttf", 14)
+    text_surface = font.render("Pressione ESC para sair", True, (255, 255, 255))
+
+    game.screen.blit(
+        text_surface,
+        (
+            game.width // 2 - text_surface.get_width() // 2,
+            game.height - text_surface.get_height() - game.border_offset - 25,
+        ),
+    )
+
+    for event in pygame.event.get():
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_ESCAPE:
+                game.network.disconnect()
+                game.network = None
+                game.state = "menu"
 
 
 def spectate_overlay(game: Game):

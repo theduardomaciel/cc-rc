@@ -2,7 +2,7 @@ import socket
 import pygame
 import pickle
 import _thread
-from random import randrange, randint
+
 from threading import Lock
 
 from classes.match import Match
@@ -35,19 +35,6 @@ match = Match(0)  # Inicializa a partida
 lock = Lock()  # Lock para evitar condições de corrida
 
 
-def generate_player(id: int) -> Player:
-    random_position = randrange(0, settings.width - 50), randrange(
-        0, settings.height - 50
-    )
-    random_color = (
-        randint(0, 255),
-        randint(0, 255),
-        randint(0, 255),
-    )
-
-    return Player(id, random_position[0], random_position[1], 50, 50, random_color)
-
-
 # Função para lidar com a conexão de um cliente (cada cliente é uma thread separada)
 def threaded_client(conn, player):
     global match
@@ -61,7 +48,7 @@ def threaded_client(conn, player):
     with lock:
         # Garantir que a operação de adicionar jogadores à lista é segura
         if match.connected_players <= match.max_players:
-            match.add_player(generate_player(player))
+            match.add_player(match.generate_player(player))
         else:
             return
 
@@ -81,8 +68,9 @@ def threaded_client(conn, player):
                 break
             else:
                 # Caso um jogador tenha entrado, verificamos se a partida pode ser iniciada
-                if match.state == "waiting" and match.connected_players > 1:
+                if match.state == "idle" and match.connected_players > 1:
                     print("Iniciando partida em alguns segundos!...")
+                    match.state = "waiting"
                     match.schedule_intermission()
 
                 if data == "reset":
@@ -93,9 +81,18 @@ def threaded_client(conn, player):
                     # Atualizamos os dados do jogador atual
                     match.players[player] = data
 
-            # Verifica se o intervalo entre partidas acabou
-            if match.state == "intermission" and match.connected_players > 1:
-                match.check_intermission_timer()
+            # Verifica se a quantidade de jogadores vivos é menor que 2
+            if match.state == "running":
+                match.check_game_over()
+
+            # Verifica se a partida deve começar (intervalo acabou)
+            if (
+                match.state == "waiting" or match.state == "ended"
+            ) and match.check_intermission_timer():
+                if match.connected_players > 1:
+                    match.start()
+                else:
+                    match.state = "idle"
 
             # print("Recebido: ", data)
             # print("Enviado: ", reply)

@@ -11,12 +11,14 @@ window_height = settings.height
 class Player:
     def __init__(self, id, x, y, width, height, color):
         self.id = id
+        self.name = settings.name
 
         self.x = x
         self.y = y
         self.width = width
         self.height = height
         self.color = color
+        self.current_color = color
         self.rect = (x, y, width, height)
 
         # Lives
@@ -25,27 +27,32 @@ class Player:
         # Physics
         self.velocity_x = 0
         self.velocity_y = 0
-        self.max_movement_velocity = 5
+        self.max_movement_velocity = 4
         self.acceleration = 0.5  # Aceleração reduzida para movimento mais gradual
         self.friction = 0.02  # Fricção menor para deslizar mais
         self.bounce_factor = 0.5  # Fator de rebote (suavidade)
 
         # Dash
         self.is_dashing = False
-        self.dash_speed = 8.5  # Velocidade durante o dash
+        self.dash_speed = 7.5  # Velocidade durante o dash
         self.dash_cooldown = 500  # Duração do dash em milissegundos
         self.last_dash_time = 0  # Tempo do último dash
 
         # Direction
         self.last_direction = [0, 0]
 
-    def draw(self, win, font: pygame.font.Font = None):
-        pygame.draw.rect(win, self.color, self.rect)
+        self.ping = 0
 
-        if font is not None:
-            lives_text = font.render(f"{self.lives} vida{self.lives != 1 and "s" or ""}", True, (255, 255, 255))
-            win.blit(lives_text, (self.x + self.width/2 - lives_text.get_width()/2, self.y - 30))
+    def draw(self, win, font: pygame.font.Font, is_player: bool = False):
+        pygame.draw.rect(win, self.current_color, self.rect)
 
+        lives_text = font.render(f"{self.lives} HP", True, (255, 255, 255))
+        win.blit(
+            lives_text,
+            (self.x + self.width / 2 - lives_text.get_width() / 2, self.y - 30),
+        )
+
+        if is_player:
             # Exibir o cooldown acima do jogador
             current_time = pygame.time.get_ticks()
             time_since_dash = current_time - self.last_dash_time
@@ -54,8 +61,27 @@ class Player:
                 remaining_time = (self.dash_cooldown - time_since_dash) / 1000
 
                 # Desenhar texto acima do jogador
-                cooldown_text = font.render(f"{remaining_time:.1f}s", True, (255, 255, 255))
-                win.blit(cooldown_text, (self.x + self.width/2 - cooldown_text.get_width()/2, self.y + 40))
+                cooldown_text = font.render(
+                    f"{remaining_time:.1f}s", True, (255, 255, 255)
+                )
+                win.blit(
+                    cooldown_text,
+                    (
+                        self.x + self.width / 2 - cooldown_text.get_width() / 2,
+                        self.y + 40,
+                    ),
+                )
+        else:
+            # Desenhar nome do jogador
+            name_text = font.render(self.name, True, (255, 255, 255))
+
+            win.blit(
+                name_text,
+                (
+                    self.x + self.width / 2 - name_text.get_width() / 2,
+                    self.y + 40,
+                ),
+            )
 
     def is_out_of_bounds_x(self, pos):
         return pos < 0 or pos > window_width - self.width
@@ -86,6 +112,10 @@ class Player:
     def notify_collision(self, attacker, on_shake):
         """Notifica o jogador de que ele foi atingido, aplicando o impacto"""
         push_factor = 0.8  # Quanto do impulso é transferido
+
+        if attacker.is_dashing:
+            push_factor = 1.5
+
         self.velocity_x -= min(10, attacker.velocity_x * push_factor)
         self.velocity_y -= min(10, attacker.velocity_y * push_factor)
 
@@ -104,7 +134,7 @@ class Player:
 
         # Verifica se o dash pode ser ativado (respeitando o cooldown)
         if (
-            keys[pygame.K_SPACE]
+            keys[pygame.K_2]
             and not self.is_dashing
             and current_time - self.last_dash_time > self.dash_cooldown
         ):
@@ -123,10 +153,13 @@ class Player:
         # Se o dash estiver ativo, continua a lógica de dash
         if self.is_dashing:
             # TODO: Animação de dash
+            self.current_color = (255, 255, 255)
 
             # Verificar se o dash acabou
             if current_time - self.last_dash_time >= self.dash_cooldown:
                 self.is_dashing = False
+        else:
+            self.current_color = self.color
 
         delta = [0, 0]
 
@@ -176,14 +209,15 @@ class Player:
 
         # Checar e aplicar o rebote nas bordas
         if self.is_out_of_bounds_x(self.x + self.velocity_x):
-            self.lives -= 1
-            interactions["on_damage"]()
+            if not self.is_dashing:
+                self.lives -= 1
+                interactions["on_damage"]()
 
-            if self.lives <= 0:
-                self.on_death()
-                interactions["on_shake"](15)
-            else:
-                interactions["on_shake"](50)
+                if self.lives <= 0:
+                    self.on_death()
+                    interactions["on_shake"](15)
+                else:
+                    interactions["on_shake"](50)
 
             # Prevenir que o jogador saia da tela (empurrado por outros jogadores)
             if self.x < 0:
@@ -194,14 +228,15 @@ class Player:
             self.velocity_x = -self.velocity_x * self.bounce_factor
 
         if self.is_out_of_bounds_y(self.y + self.velocity_y):
-            self.lives -= 1
-            interactions["on_damage"]()
+            if not self.is_dashing:
+                self.lives -= 1
+                interactions["on_damage"]()
 
-            if self.lives <= 0:
-                self.on_death()
-                interactions["on_shake"](15)
-            else:
-                interactions["on_shake"](50)
+                if self.lives <= 0:
+                    self.on_death()
+                    interactions["on_shake"](15)
+                else:
+                    interactions["on_shake"](50)
 
             # Prevenir que o jogador saia da tela (empurrado por outros jogadores)
             if self.y < 0:
@@ -235,7 +270,7 @@ class Player:
 
                     if self.y > other_player.y:
                         self.y += 1
-                        
+
                     interactions["on_shake"](10)
 
                     # Notifica o jogador que foi atingido
