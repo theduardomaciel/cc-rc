@@ -12,6 +12,8 @@ from classes.player import Player
 from classes.button import Button
 from classes.match import Match
 
+settings = Settings()
+
 
 class Game:
     def __init__(self):
@@ -173,7 +175,10 @@ class Game:
                             self.player = match.players[self.player.id]
                             self.state = "gameover"
 
-                    elif match.state == "waiting" and match.connected_players >= 2:
+                    elif (
+                        match.state == "waiting"
+                        and match.connected_players >= settings.min_players
+                    ):
                         intermission_timer_overlay(self, match)
                     else:
                         wait_lobby_overlay(self)

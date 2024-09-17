@@ -6,7 +6,6 @@ import _thread
 from threading import Lock
 
 from classes.match import Match
-from classes.player import Player
 from utils.settings import Settings
 
 settings = Settings()
@@ -68,7 +67,10 @@ def threaded_client(conn, player):
                 break
             else:
                 # Caso um jogador tenha entrado, verificamos se a partida pode ser iniciada
-                if match.state == "idle" and match.connected_players > 1:
+                if (
+                    match.state == "idle"
+                    and match.connected_players >= settings.min_players
+                ):
                     print("Iniciando partida em alguns segundos!...")
                     match.state = "waiting"
                     match.schedule_intermission()
@@ -89,7 +91,7 @@ def threaded_client(conn, player):
             if (
                 match.state == "waiting" or match.state == "ended"
             ) and match.check_intermission_timer():
-                if match.connected_players > 1:
+                if match.connected_players >= settings.min_players:
                     match.start()
                 else:
                     match.state = "idle"

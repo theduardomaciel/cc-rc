@@ -15,7 +15,7 @@ class Match:
         self.id = id
         self.players = list()
         self.state = "idle"  # idle, waiting, running, ended
-        self.max_players = 4
+        self.max_players = settings.max_players
         self.connected_players = 0
 
         self.intermission_duration = 5 * 1000  # 10 segundos em milissegundos
@@ -76,6 +76,6 @@ class Match:
         alive_players = [p for p in self.players if p.lives > 0]
         print("Jogadores vivos: ", len(alive_players))
 
-        if len(alive_players) < 2:
+        if len(alive_players) < settings.min_players:
             print("Fim de jogo! Aguardando próxima partida...")
             self.reset()
