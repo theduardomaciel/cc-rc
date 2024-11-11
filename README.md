@@ -12,25 +12,6 @@ O jogo foi desenvolvido como projeto final da matéria Rede de Computadores do c
 No **Dash Muse**, o objetivo é empurrar outros jogadores para fora da área de jogo, causando-lhes dano.  
 Os jogadores começam com 10 vidas (valor configurável) e podem realizar um dash (impulso) a cada 0,5s (500ms) para aumentar as chances de empurrar os inimigos.  
 
-### Interfaces do Jogo
-
-- **Menu Inicial:** Tela de boas-vindas.
-    <picture>
-    <img alt="Print do menu inicial" src="/.github/menu.png">
-    </picture>
-- **Sala de Espera:** Espera por pelo menos um jogador para iniciar a partida.
-    <picture>
-    <img alt="Print da sala de espera pela quantidade de jogadores suficientes" src="/.github/waiting_room.png">
-    </picture>
-- **Sala de espera por partida:** Espera alguns segundos para que outros jogadores tenham a oportunidade de se juntar à partida.
-    <picture>
-    <img alt="Print da sala de espera pelo início da partida após quantidade mínima de jogadores" src="/.github/intermission.png">
-    </picture>
-- **Tela de Partida:** Arena onde ocorre o confronto até restar apenas um jogador.
-    <picture>
-    <img alt="Print da tela de partida, onde o jogo ocorre" src="/.github/match.png">
-    </picture>
-
 ## 🛠 Tecnologias Utilizadas
 
 | Tecnologia | Descrição |
@@ -78,6 +59,32 @@ Recomenda-se criar um ambiente virtual para executar o projeto em Python, mas es
 3. **Executar o jogo no Visual Studio Code:**
    - Abra a pasta raiz do projeto no VS Code.
    - Pressione `Ctrl + Shift + B` e escolha a opção de execução desejada.
+
+## 👀 Demonstrações
+
+### Interfaces do Jogo
+
+- **Menu Inicial:** Tela de boas-vindas.
+    <picture>
+    <img alt="Print do menu inicial" src="/.github/menu.png">
+    </picture>
+- **Sala de Espera:** Espera por pelo menos um jogador para iniciar a partida.
+    <picture>
+    <img alt="Print da sala de espera pela quantidade de jogadores suficientes" src="/.github/waiting_room.png">
+    </picture>
+- **Sala de espera por partida:** Espera alguns segundos para que outros jogadores tenham a oportunidade de se juntar à partida.
+    <picture>
+    <img alt="Print da sala de espera pelo início da partida após quantidade mínima de jogadores" src="/.github/intermission.png">
+    </picture>
+- **Tela de Partida:** Arena onde ocorre o confronto até restar apenas um jogador.
+    <picture>
+    <img alt="Print da tela de partida, onde o jogo ocorre" src="/.github/match.png">
+    </picture>
+
+### Exemplo de partida
+
+https://github.com/user-attachments/assets/9e0d5e84-e444-45c5-949d-49594bb74479
+
 
 ## 📄 Licença
 
