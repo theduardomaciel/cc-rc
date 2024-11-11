@@ -36,7 +36,7 @@ class Player:
         # Dash
         self.is_dashing = False
         self.dash_speed = 7.5  # Velocidade durante o dash
-        self.dash_cooldown = 500  # Duração do dash em milissegundos
+        self.dash_cooldown = 1000  # Duração do dash em milissegundos
         self.last_dash_time = 0  # Tempo do último dash
 
         # Direction
@@ -88,7 +88,7 @@ class Player:
     def notify_collision(self, attacker, on_shake):
         """Notifica o jogador de que ele foi atingido, aplicando o impacto"""
 
-        push_factor = 5 if attacker.is_dashing else 1  # Aumenta o empurrão se estiver no dash
+        push_factor = 3.5 if attacker.is_dashing else 1  # Aumenta o empurrão se estiver no dash
 
         # Calcula o vetor de empurrão na direção do atacante
         dx = self.x - attacker.x
