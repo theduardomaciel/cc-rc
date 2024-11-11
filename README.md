@@ -1,11 +1,11 @@
 # Dash Muse
 
 <picture>
-  <img alt="Dash Muse" src="/.github/cover.png">
+  <img alt="Capa para o repositório do jogo Dash Muse, desenvolvido para a matéria de Rede de Computadores" src="/.github/cover.png">
 </picture>
 
 **Dash Muse** é um jogo dinâmico multiplayer, desenvolvido em Python, onde os jogadores competem para se tornar o último sobrevivente em uma arena baseada em física e colisões.  
-O jogo envolve habilidades de estratégia e reflexo, permitindo que os jogadores promovam ou evitem colisões enquanto permanecem dentro de uma área restrita.
+O jogo foi desenvolvido como projeto final da matéria Rede de Computadores do curso de Ciência da Computação da Universidade Federal de Alagoas (UFAL), e envolve habilidades de estratégia e reflexo, permitindo que os jogadores promovam ou evitem colisões enquanto permanecem dentro de uma área restrita.
 
 ## 🕹️ Sobre
 
@@ -15,28 +15,50 @@ Os jogadores começam com 10 vidas (valor configurável) e podem realizar um das
 ### Interfaces do Jogo
 
 - **Menu Inicial:** Tela de boas-vindas.
+    <picture>
+    <img alt="Print do menu inicial" src="/.github/menu.png">
+    </picture>
 - **Sala de Espera:** Espera por pelo menos um jogador para iniciar a partida.
-- **Tela de Partida:** Arena onde ocorre o confronto até restar um jogador.
+    <picture>
+    <img alt="Print da sala de espera pela quantidade de jogadores suficientes" src="/.github/waiting_room.png">
+    </picture>
+- **Sala de espera por partida:** Espera alguns segundos para que outros jogadores tenham a oportunidade de se juntar à partida.
+    <picture>
+    <img alt="Print da sala de espera pelo início da partida após quantidade mínima de jogadores" src="/.github/intermission.png">
+    </picture>
+- **Tela de Partida:** Arena onde ocorre o confronto até restar apenas um jogador.
+    <picture>
+    <img alt="Print da tela de partida, onde o jogo ocorre" src="/.github/match.png">
+    </picture>
 
 ## 🛠 Tecnologias Utilizadas
 
-- **Python:** Linguagem principal do desenvolvimento, desde a lógica do jogo até a manutenção do servidor.
-- **Pygame:** Biblioteca para renderização gráfica e manipulação da interface, permitindo atualizações em tempo real dos jogadores.
-- **Socket:** Utilizada para configurar a conexão cliente-servidor, possibilitando o multiplayer em rede local.
-- **Pickle:** Gerenciamento de objetos serializados para envio dos dados dos jogadores.
-- **Threading:** Gerencia as conexões, monitorando eventos e mantendo a comunicação entre cliente e servidor.
+| Tecnologia | Descrição |
+|------------|-----------|
+| **Python** | Linguagem principal do desenvolvimento, desde a lógica do jogo até a manutenção do servidor. |
+| **Pygame** | Biblioteca para renderização gráfica e manipulação da interface, permitindo atualizações em tempo real dos jogadores. |
+| **Socket** | Utilizada para configurar a conexão cliente-servidor, possibilitando o multiplayer em rede local. |
+| **Pickle** | Gerenciamento de objetos serializados para envio dos dados dos jogadores. |
+| **Threading** | Gerencia as conexões, monitorando eventos e mantendo a comunicação entre cliente e servidor. |
 
 ## 📂 Estrutura do Código
 
-- **settings.ini:** Configurações do jogo, incluindo tela, regras e rede.
-- **requirements.txt:** Lista das bibliotecas necessárias.
-- **src/classes:** Classes de componentes da interface e lógica do jogo.
-- **src/utils:** Funções auxiliares para renderização e formatação.
-- **src/network.py:** Configurações de rede e dados de conexão.
-- **src/client.py:** Interface do jogo e gerenciamento dos sprites e eventos.
-- **src/server.py:** Configuração do servidor que gerencia as partidas e conexão dos jogadores.
+```plaintext
+├── settings.ini             # Configurações de tela, regras do jogo e rede
+├── requirements.txt         # Bibliotecas necessárias para o projeto
+├── src/
+│   ├── classes/             # Componentes e classes para a interface cliente
+│   │   ├── player.py        # Classe com definição de atributos e eventos do jogador
+│   │   └── ...              # Outras classes de componentes
+│   ├── utils/               # Funções auxiliares para renderização e formatação
+│   │   └── ...              # Scripts utilitários
+│   ├── network.py           # Configuração de rede e dados de conexão
+│   ├── client.py            # Interface e lógica do jogo, renderização dos sprites
+│   └── server.py            # Servidor, gerencia partidas e conexão de jogadores
+└── readme.md                # Documentação do projeto
+```
 
-## 🚀 Como executar
+## 🚀 Como Executar
 
 Recomenda-se criar um ambiente virtual para executar o projeto em Python, mas essa etapa é opcional.
 
@@ -56,8 +78,6 @@ Recomenda-se criar um ambiente virtual para executar o projeto em Python, mas es
 3. **Executar o jogo no Visual Studio Code:**
    - Abra a pasta raiz do projeto no VS Code.
    - Pressione `Ctrl + Shift + B` e escolha a opção de execução desejada.
-
-> [!NOTE]
 
 ## 📄 Licença
 
