@@ -54,6 +54,13 @@ class Player:
 
         self.ping = 0
 
+    def reset(self):
+        self.lives = 10
+        self.velocity_x = 0
+        self.velocity_y = 0
+        self.is_dashing = False
+        self.last_dash_time
+
     def is_out_of_bounds_x(self, pos):
         if pos < 0:
             return -1
@@ -80,15 +87,24 @@ class Player:
 
     def notify_collision(self, attacker, on_shake):
         """Notifica o jogador de que ele foi atingido, aplicando o impacto"""
-        push_factor = 0.8  # Quanto do impulso é transferido
+        push_factor = 1.5 if attacker.is_dashing else 1  # Aumenta o empurrão se estiver no dash
+        # Calcula o vetor de empurrão na direção do atacante
+        dx = self.x - attacker.x
+        dy = self.y - attacker.y
+        distance = math.hypot(dx, dy)
 
-        if attacker.is_dashing:
-            push_factor = 1.5
+        # Evita divisões por zero para direções exatas
+        if distance != 0:
+            dx /= distance
+            dy /= distance
 
-        self.velocity_x -= min(10, attacker.velocity_x * push_factor)
-        self.velocity_y -= min(10, attacker.velocity_y * push_factor)
+        # Aplica uma velocidade com base na direção do empurrão
+        self.velocity_x += dx * push_factor * 5  # Ajusta a força do empurrão aqui
+        self.velocity_y += dy * push_factor * 5
 
+        # Executa a função de shake
         on_shake(10)
+
 
     def on_death(self):
         # Game over
@@ -259,25 +275,26 @@ class Player:
         if players is not None:
             for other_player in players:
                 if self.check_collision(other_player):
+                    if self.x < other_player.x:
+                        self.x -= 0.1
+
+                    if self.x > other_player.x:
+                        self.x += 0.1
+
+                    if self.y < other_player.y:
+                        self.y -= 0.1
+
+                    if self.y > other_player.y:
+                        self.y += 0.1
+
                     self.velocity_x = -self.velocity_x * self.bounce_factor
                     self.velocity_y = -self.velocity_y * self.bounce_factor
 
-                    if self.x < other_player.x:
-                        self.x -= 1
-
-                    if self.x > other_player.x:
-                        self.x += 1
-
-                    if self.y < other_player.y:
-                        self.y -= 1
-
-                    if self.y > other_player.y:
-                        self.y += 1
+                    # Notifica o jogador que foi atingido
+                    self.notify_collision(other_player, interactions["on_shake"])
 
                     interactions["on_shake"](10)
 
-                    # Notifica o jogador que foi atingido
-                    self.notify_collision(other_player, interactions["on_shake"])
 
         # print("Velocidade X: ", self.velocity_x)
         # print("Velocidade Y: ", self.velocity_y)

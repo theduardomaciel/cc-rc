@@ -173,6 +173,7 @@ class Game:
                                 match.players[self.player.id],
                             )
                             self.player = match.players[self.player.id]
+                            self.player.reset()
                             self.state = "gameover"
 
                     elif (

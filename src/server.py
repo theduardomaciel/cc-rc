@@ -18,7 +18,7 @@ print(f"Porta: {port, type(port)}")
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 # AF_INET é a família de endereços para IPv4
-# SOCK_STREAM é o tipo de socket para TCP
+# SOCK_STREAM é o tipo de socket para TCP (SOCK_DGRAM para UDP)
 
 try:
     s.bind((server, port))
