@@ -87,7 +87,9 @@ class Player:
 
     def notify_collision(self, attacker, on_shake):
         """Notifica o jogador de que ele foi atingido, aplicando o impacto"""
-        push_factor = 1.5 if attacker.is_dashing else 1  # Aumenta o empurrão se estiver no dash
+
+        push_factor = 5 if attacker.is_dashing else 1  # Aumenta o empurrão se estiver no dash
+
         # Calcula o vetor de empurrão na direção do atacante
         dx = self.x - attacker.x
         dy = self.y - attacker.y
