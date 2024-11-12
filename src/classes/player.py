@@ -91,7 +91,6 @@ class Player:
         # Aumenta o empurrão se estiver no dash
         if attacker.is_dashing:
             push_factor = 3.5
-            self.invulnerability_start_time = self.invulnerability_duration # Remove a invulnerabilidade
         else:
             push_factor = 1
 
@@ -167,7 +166,7 @@ class Player:
         # Se o dash estiver ativo, continua a lógica de dash
         if self.is_dashing:
             # TODO: Animação de dash
-            self.transparency = 128
+            # self.transparency = 128
             # Não é necessário retornar a transparência para 255 pois o bloco de código acima já faz isso
 
             # Verificar se o dash acabou
@@ -226,14 +225,13 @@ class Player:
         # Checar e aplicar o rebote nas bordas
         direction_x = self.is_out_of_bounds_x(self.x + self.velocity_x)
         if direction_x:
-            if not self.is_dashing:
-                self.on_damage(1, interactions)
+            self.on_damage(1, interactions)
 
-                # Bloqueia o movimento na direção X temporariamente
-                self.blocked_directions[0][direction_x > 0 and 1 or 0] = True
+            # Bloqueia o movimento na direção X temporariamente
+            self.blocked_directions[0][direction_x > 0 and 1 or 0] = True
 
-                # Inicia a invulnerabilidade
-                self.invulnerability_start_time = current_time
+            # Inicia a invulnerabilidade
+            self.invulnerability_start_time = current_time
 
             # Prevenir que o jogador saia da tela (empurrado por outros jogadores)
             if direction_x < 0:
@@ -246,17 +244,16 @@ class Player:
 
         direction_y = self.is_out_of_bounds_y(self.y + self.velocity_y)
         if direction_y:
-            if not self.is_dashing:
-                self.on_damage(1, interactions)
+            self.on_damage(1, interactions)
 
-                # Bloqueia o movimento na direção X temporariamente
-                self.blocked_directions[1][direction_y > 0 and 1 or 0] = True
+            # Bloqueia o movimento na direção X temporariamente
+            self.blocked_directions[1][direction_y > 0 and 1 or 0] = True
 
-                # Inicia a invulnerabilidade
-                self.invulnerability_start_time = current_time
+            # Inicia a invulnerabilidade
+            self.invulnerability_start_time = current_time
 
-                # Rebote na direção oposta
-                self.velocity_x = -self.velocity_x * self.bounce_factor
+            # Rebote na direção oposta
+            self.velocity_x = -self.velocity_x * self.bounce_factor
 
             # Prevenir que o jogador saia da tela (empurrado por outros jogadores)
             if direction_y < 0:
