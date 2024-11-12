@@ -25,6 +25,9 @@ class Game:
         self.width = self.settings.width
         self.height = self.settings.height
 
+        pygame_icon = pygame.image.load('data/images/icon.png')
+        pygame.display.set_icon(pygame_icon)
+        
         self.screen = pygame.display.set_mode((self.width, self.height))
         self.display = pygame.Surface((self.width, self.height))
 
