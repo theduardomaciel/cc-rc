@@ -30,12 +30,12 @@ class Player:
         self.velocity_y = 0
         self.max_movement_velocity = 4
         self.acceleration = 0.5  # Aceleração reduzida para movimento mais gradual
-        self.friction = 0.02  # Fricção menor para deslizar mais
+        self.friction = 0.05  # Fricção menor para deslizar mais
         self.bounce_factor = 0.5  # Fator de rebote (suavidade)
 
         # Dash
         self.is_dashing = False
-        self.dash_speed = 7.5  # Velocidade durante o dash
+        self.dash_speed = 7  # Velocidade durante o dash
         self.dash_cooldown = 1000  # Duração do dash em milissegundos
         self.last_dash_time = 0  # Tempo do último dash
 
