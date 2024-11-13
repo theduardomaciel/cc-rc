@@ -14,6 +14,7 @@ class Network:
         self.port = settings.port
         self.address = (self.server, self.port)
         self.player = self.connect()
+        self.match = None
 
     def get_player(self):
         return self.player
@@ -23,7 +24,7 @@ class Network:
             # Conecta ao servidor
             self.client.connect(self.address)
 
-            # Recebe a resposta do servidor
+            # Recebe a resposta do servidor (dados recebe seus dados jogador)
             return pickle.loads(self.client.recv(2048))
         except socket.error as e:
             print(e)
@@ -32,13 +33,12 @@ class Network:
         self.client.close()
 
     def send(self, data) -> Match:
+        # Envia dados (jogador local) ao servidor
+        self.client.send(pickle.dumps(data))
+        # print("Dados enviados:", data)
+
         try:
-            # print("Dados enviados:", data)
-
-            # Envia dados ao servidor (jogador local)
-            self.client.send(pickle.dumps(data))
-
-            # Recebe a resposta do servidor (outros jogadores)
-            return pickle.loads(self.client.recv(2048 * 2))
+            # Recebe a resposta do servidor (partida)
+            return pickle.loads(self.client.recv(2048))
         except socket.error as e:
             print(e)

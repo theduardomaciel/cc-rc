@@ -38,6 +38,8 @@ lock = Lock()  # Lock para evitar condições de corrida
 def threaded_client(conn, player):
     global match
 
+    # Primeira conexão com o cliente ========================
+
     with lock:
         match.connected_players += 1
     print(
@@ -45,10 +47,12 @@ def threaded_client(conn, player):
     )
 
     with lock:
-        # Garantir que a operação de adicionar jogadores à lista é segura
+        # Garantir que ainda existe espaço na partida para adicionar um novo jogador
         if match.connected_players <= match.max_players:
             match.add_player(match.generate_player(player))
         else:
+            print("Partida cheia. Não é possível adicionar mais jogadores.")
+            conn.close()
             return
 
     print("Jogador atual: ", player)
@@ -57,10 +61,14 @@ def threaded_client(conn, player):
     # Enviamos os dados do jogador atual para o cliente
     conn.send(pickle.dumps(match.players[player]))
 
+    # Loop para manter a conexão com o cliente ========================
+
     while True:
         try:
             # Obtemos os dados atualizados do cliente (jogador atual)
             data = pickle.loads(conn.recv(2048))
+
+            ready_players = [player for player in match.players if player.is_ready]
 
             # Se não encontrarmos dados, a conexão com o cliente foi perdida
             if not data:
@@ -69,7 +77,7 @@ def threaded_client(conn, player):
                 # Caso um jogador tenha entrado, verificamos se a partida pode ser iniciada
                 if (
                     match.state == "idle"
-                    and match.connected_players >= settings.min_players
+                    and len(ready_players) >= settings.min_players
                 ):
                     print("Iniciando partida em alguns segundos!...")
                     match.state = "waiting"
@@ -91,7 +99,7 @@ def threaded_client(conn, player):
             if (
                 match.state == "waiting" or match.state == "ended"
             ) and match.check_intermission_timer():
-                if match.connected_players >= settings.min_players:
+                if len(ready_players) >= settings.min_players:
                     match.start()
                 else:
                     match.state = "idle"
@@ -104,10 +112,13 @@ def threaded_client(conn, player):
         except:
             break
 
+    # Se a conexão com o cliente foi perdida, fechamos a conexão e removemos o jogador
+
     print(f"Conexão perdida com jogador {player}")
     conn.close()
 
     with lock:
+        print(len(match.players))
         match.remove_player(match.players[player])
         match.connected_players -= 1
     print(f"Jogadores conectados restantes: {match.connected_players}")

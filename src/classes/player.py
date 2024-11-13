@@ -53,6 +53,7 @@ class Player:
         self.blocked_directions = [[False, False], [False, False]]
 
         self.ping = 0
+        self.is_ready = False
 
     def reset(self):
         self.lives = 10

@@ -5,7 +5,7 @@ import random
 import pygame
 
 from network import Network
-from utils.strings import format_seconds
+from utils.strings import format_seconds, format_players_amount
 from utils.settings import Settings
 from utils.assets import load_image, load_font, rotate_image
 from classes.player import Player
@@ -70,13 +70,19 @@ class Game:
 
         self.state = "menu"  # pode ser: menu, game, gameover
 
-        self.network = None
-        self.ping = 0
-        self.player = None
+        def join_match(self):
+            try:
+                self.network = Network()
+            except Exception as e:
+                print(f"Erro ao conectar ao servidor: {e}")
+                pygame.quit()
 
-    def join_match(self):
-        self.network = Network()
-        self.player = self.network.get_player()
+            return self.network.get_player()
+
+        self.network = None
+        self.player: Player = join_match(self)
+
+        print(f"Jogador conectado: {self.player}")
 
     def render_players(self, players: list[Player]):
         if self.player.lives > 0:
@@ -98,7 +104,7 @@ class Game:
     def on_shake(self, intensity: int):
         # print("Tremeu!")
         self.screenshake = intensity
-
+ 
     def on_damage(self):
         # print("Tomou dano!")
         self.damage_alpha = 255
@@ -112,6 +118,7 @@ class Game:
 
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
+                    pygame.display.quit()
                     pygame.quit()
                     sys.exit()
 
@@ -123,8 +130,8 @@ class Game:
             main_deco(self)
             damage_overlay(self)
 
-            if self.network:
-                match = None
+            if self.network and self.player.is_ready:
+                match: Match = None
 
                 start = pygame.time.get_ticks()
 
@@ -141,6 +148,8 @@ class Game:
 
                 # Administra o estado do jogo na rede
                 if match:
+                    ready_players_count = [player for player in match.players if player.is_ready]
+
                     if match.state == "running":
                         # Jogo em andamento
                         self.state = "game"
@@ -181,7 +190,7 @@ class Game:
 
                     elif (
                         match.state == "waiting"
-                        and match.connected_players >= settings.min_players
+                        and ready_players_count >= settings.min_players
                     ):
                         intermission_timer_overlay(self, match)
                     else:
@@ -339,11 +348,7 @@ def intermission_timer_overlay(game: Game, match: Match):
 
 
 def play_game(game: Game):
-    print("Entrando no jogo...")
-    try:
-        game.join_match()
-    except Exception as e:
-        print(f"Erro ao entrar na partida: {e}")
+    game.player.is_ready = True
 
 
 def wait_lobby_overlay(game: Game):
@@ -376,8 +381,7 @@ def wait_lobby_overlay(game: Game):
     for event in pygame.event.get():
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_ESCAPE:
-                game.network.disconnect()
-                game.network = None
+                game.player.is_ready = False
                 game.state = "menu"
 
 
@@ -473,9 +477,16 @@ class MainMenu:
                 if is_hover:
                     self.button_play.execute(game)
 
+        # Obtemos a quantidade de jogadores online
+        connected_players = 0
+
+        if game.network:
+            match = game.network.send(game.player)
+            connected_players = match.connected_players
+
         # Texto de quantidade de jogadores online
         font = load_font("ReemKufiInk-Regular.ttf", 14)
-        text_surface = font.render("2 jogadores online", True, (255, 255, 255))
+        text_surface = font.render(f"{format_players_amount(connected_players)} online", True, (255, 255, 255))
 
         game.screen.blit(
             text_surface,

@@ -1,4 +1,5 @@
 import pygame
+from typing import List
 from random import randrange, randint
 
 from classes.player import Player
@@ -13,7 +14,7 @@ settings = Settings()
 class Match:
     def __init__(self, id):
         self.id = id
-        self.players = list()
+        self.players: List[Player] = list()
         self.state = "idle"  # idle, waiting, running, ended
         self.max_players = settings.max_players
         self.connected_players = 0
