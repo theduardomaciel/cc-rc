@@ -136,12 +136,7 @@ while True:
 
     with lock:
         player_id = match.connected_players  # Atribui um ID ao jogador atual
-
-    # pygame.time.get_ticks() = current_time
-    time_since_last_intermission = (
-        pygame.time.get_ticks() - match.last_intermission_time
-    )
-
+        
     # Criamos uma nova thread para cada cliente, visto que podemos
     # aceitar múltiplos clientes ao mesmo tempo (multithreading - paralelismo)
     _thread.start_new_thread(threaded_client, (conn, player_id))
