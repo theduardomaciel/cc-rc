@@ -118,6 +118,7 @@ class Game:
 
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
+                    print("Saindo do jogo...")
                     pygame.display.quit()
                     pygame.quit()
                     sys.exit()
@@ -148,7 +149,7 @@ class Game:
 
                 # Administra o estado do jogo na rede
                 if match:
-                    ready_players_count = [player for player in match.players if player.is_ready]
+                    ready_players_count = len([player for player in match.players if player.is_ready])
 
                     if match.state == "running":
                         # Jogo em andamento
@@ -311,9 +312,7 @@ def intermission_timer_overlay(game: Game, match: Match):
     )
 
     # Adiciona o texto "Aguardando partida..." no centro da tela
-    remaining_time = match.intermission_duration - (
-        pygame.time.get_ticks() - match.last_intermission_time
-    )  # Tempo restante em milissegundos
+    remaining_time = match.remaining_intermission_time  # Tempo restante em milissegundos
 
     font = load_font("ReemKufiInk-Regular.ttf", 18)
     text_surface = font.render(
@@ -481,8 +480,11 @@ class MainMenu:
         connected_players = 0
 
         if game.network:
-            match = game.network.send(game.player)
-            connected_players = match.connected_players
+            try:
+                match = game.network.send(game.player)
+                connected_players = match.connected_players
+            except Exception as e:
+                print(f"Erro ao obter a quantidade de jogadores: {e}")
 
         # Texto de quantidade de jogadores online
         font = load_font("ReemKufiInk-Regular.ttf", 14)

@@ -63,6 +63,8 @@ def threaded_client(conn, player):
 
     # Loop para manter a conexão com o cliente ========================
 
+    tick = pygame.time.get_ticks()
+
     while True:
         try:
             # Obtemos os dados atualizados do cliente (jogador atual)
@@ -104,6 +106,10 @@ def threaded_client(conn, player):
                 else:
                     match.state = "idle"
 
+            match.remaining_intermission_time = (
+                match.intermission_duration - (pygame.time.get_ticks() - match.last_intermission_time)
+            )
+
             # print("Recebido: ", data)
             # print("Enviado: ", reply)
 
@@ -118,9 +124,9 @@ def threaded_client(conn, player):
     conn.close()
 
     with lock:
-        print(len(match.players))
-        match.remove_player(match.players[player])
+        match.remove_player(match.players[player - 1])
         match.connected_players -= 1
+
     print(f"Jogadores conectados restantes: {match.connected_players}")
 
 

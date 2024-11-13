@@ -21,6 +21,7 @@ class Match:
 
         self.intermission_duration = 5 * 1000  # 10 segundos em milissegundos
         self.last_intermission_time = 0
+        self.remaining_intermission_time = 0
 
     def add_player(self, player):
         if len(self.players) < self.max_players:

@@ -117,7 +117,6 @@ class Player:
     def on_death(self):
         # Game over
         print("Game over!")
-        # pygame.quit()
 
     def on_damage(self, damage: int, interactions: dict):
         self.lives -= damage
